@@ -1,6 +1,9 @@
 FROM gitpod/workspace-full
 
-RUN sudo install-packages build-essential curl libffi-dev libffi7 libgmp-dev libgmp10 \
+ADD ./.gitpod.cabal_config /home/gitpod/.cabal/config
+
+RUN sudo chown -R gitpod: $HOME/.cabal && \
+    sudo install-packages build-essential curl libffi-dev libffi7 libgmp-dev libgmp10 \
         libncurses-dev libncurses5 libtinfo5 && \
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 BOOTSTRAP_HASKELL_MINIMAL=1 sh && \
     echo 'source $HOME/.ghcup/env' >> $HOME/.bashrc && \
@@ -10,13 +13,12 @@ RUN sudo install-packages build-essential curl libffi-dev libffi7 libgmp-dev lib
     ghcup install ghc 8.8.4 && \
     ghcup install ghc 8.10.7 && \
     ghcup install ghc 9.0.2 && \
-    ghcup install ghc 9.2.2 && \
-    ghcup install ghc 9.2.3 --set && \
+    ghcup install ghc 9.2.2 --set && \
     ghcup install hls --set && \
     ghcup install cabal --set && \
     ghcup install stack --set && \
     cabal update && \
-    cabal install --disable-executable-dynamic --install-method copy --constraint "stylish-haskell +ghc-lib" \
+    cabal install --constraint "stylish-haskell +ghc-lib" \
       stylish-haskell implicit-hie hoogle && \
     rm -rf $HOME/.cabal/store && \
     pip install pre-commit && \

@@ -1,1 +1,3 @@
-main = putStrLn "Hello, world"
+module Main(main) where
+
+import           Hoogle.Cabal (main)

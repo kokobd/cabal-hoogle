@@ -28,6 +28,13 @@ tasks:
       done
 
       ghcup set ghc 9.2.2
+
+      mkdir -p .vscode
+      if [ ! -f .vscode/settings.json ]; then
+        echo '{' > .vscode/settings.json
+        echo '  "haskell.formattingProvider": "ormolu"' >> .vscode/settings.json
+        echo '}' >> .vscode/settings.json
+      fi
     init: |
       cabal update
       cabal build --enable-tests all
