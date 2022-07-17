@@ -1,6 +1,7 @@
 repository hackage.haskell.org
   url: http://hackage.haskell.org/
 
+documentation: True
 remote-repo-cache: /home/gitpod/.cabal/packages
 world-file: /home/gitpod/.cabal/world
 extra-prog-path: /home/gitpod/.cabal/bin
