@@ -1,5 +1,5 @@
 # Revision history for cabal-hoogle
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 0.1.0.0 -- 2022-07-22
 
-* First version. Released on an unsuspecting world.
+* First version. Supports `cabal-hoogle generate` and `cabal-hoogle run`

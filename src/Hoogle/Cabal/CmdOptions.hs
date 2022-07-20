@@ -8,10 +8,10 @@ import Data.Text (Text)
 import Options.Applicative
 
 data CmdOptions = CmdOptions
-  { compiler :: Maybe Text,
-    platform :: Maybe Text,
-    builddir :: FilePath,
-    hoogleArgs :: [Text]
+  { cmdOptions_compiler :: Maybe Text,
+    cmdOptions_platform :: Maybe Text,
+    cmdOptions_builddir :: FilePath,
+    cmdOptions_hoogleArgs :: [Text]
   } deriving (Show, Eq)
 
 parser :: Parser CmdOptions

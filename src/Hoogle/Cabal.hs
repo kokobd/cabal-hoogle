@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -7,6 +8,7 @@ import Control.Exception (catch, throw)
 import Control.Monad (unless)
 import Data.Bifunctor (Bifunctor (second))
 import qualified Data.List.NonEmpty as NonEmpty
+import qualified Data.List.NonEmpty.Extra as NonEmpty
 import qualified Data.Map.Strict as Map
 import Data.Maybe (catMaybes)
 import Data.String.Interpolate (i)
@@ -14,7 +16,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Traversable (forM)
-import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs))
+import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs, installedUnitId))
 import Distribution.Simple.Configure (getPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
 import Distribution.Types.LocalBuildInfo (LocalBuildInfo, installedPkgs, localPkgDescr)
@@ -33,8 +35,8 @@ import Prelude hiding (log)
 
 main :: IO ()
 main = do
-  cmdOptions <- readCmdOptions
-  localPackagesDir <- findLocalPackagesBuildDir cmdOptions.compiler cmdOptions.platform cmdOptions.builddir
+  CmdOptions {..} <- readCmdOptions
+  localPackagesDir <- findLocalPackagesBuildDir cmdOptions_compiler cmdOptions_platform cmdOptions_builddir
   let hoogleDir = localPackagesDir </> ".hoogle"
       hoogleLocalPackagesDir = hoogleDir </> "local"
       hoogleDependenciesDir = hoogleDir </> "dependencies"
@@ -51,10 +53,10 @@ main = do
   withCurrentDirectory hoogleDir $ do
     runProcess_ . proc "hoogle" $
       ["generate", "--database=all.hoo", "--local=local", "--local=dependencies"] ++ nameStrs
-  -- Serve
+    -- Serve
     runProcess_ . proc "hoogle" $
       ["server", "--database=all.hoo", "--local", "--port=8080"]
-    
+
   pure ()
 
 findLocalPackagesBuildDir ::
@@ -99,10 +101,12 @@ symlinkLocalPackages localPackagesDir destDir = do
 
 symlinkDependencies :: [LocalBuildInfo] -> FilePath -> IO [PackageName]
 symlinkDependencies localPackages hoogleDependenciesDir = do
-  let nameToPkgs = Map.fromListWith (<>) $ concatMap collectDependencies localPackages
-  pkgs <- fmap catMaybes . forM (Map.toList nameToPkgs) $ \(name, (pkg NonEmpty.:| pkgs)) -> do
+  let nameToPkgs =
+        fmap (NonEmpty.nubOrdOn installedUnitId) . Map.fromListWith (<>) $
+          concatMap collectDependenciesForPkg localPackages
+  pkgs <- fmap catMaybes . forM (Map.toList nameToPkgs) $ \(name, allPkgs@(pkg NonEmpty.:| pkgs)) -> do
     unless (null pkgs) $
-      T.putStrLn [i|Warning: package #{name} has more than 1 version installed, this should not happen|]
+      T.putStrLn [i|Warning: package #{name} has more than 1 version installed, this should not happen. all pkgs: #{fmap installedUnitId allPkgs}|]
     case haddockHTMLs pkg of
       [htmlDir] -> pure $ Just (name, htmlDir)
       htmlDirs -> do
@@ -112,8 +116,8 @@ symlinkDependencies localPackages hoogleDependenciesDir = do
     createDirectoryLink dir (hoogleDependenciesDir </> unPackageName name)
     pure name
   where
-    collectDependencies pkg =
+    collectDependenciesForPkg pkg =
       let depsWithName = allPackagesByName (installedPkgs pkg)
-       in fmap (second NonEmpty.singleton)
+       in fmap (second (NonEmpty.:| []))
             . concatMap (\(name, pkgs) -> fmap (name,) pkgs)
             $ depsWithName
