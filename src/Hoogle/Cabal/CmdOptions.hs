@@ -1,6 +1,7 @@
 module Hoogle.Cabal.CmdOptions
-  ( CmdOptions(..),
+  ( CmdOptions (..),
     readCmdOptions,
+    Command (..),
   )
 where
 
@@ -11,8 +12,14 @@ data CmdOptions = CmdOptions
   { cmdOptions_compiler :: Maybe Text,
     cmdOptions_platform :: Maybe Text,
     cmdOptions_builddir :: FilePath,
-    cmdOptions_hoogleArgs :: [Text]
-  } deriving (Show, Eq)
+    cmdOptions_command :: Command
+  }
+  deriving (Show, Eq)
+
+data Command
+  = CommandGenerate
+  | CommandRun [String]
+  deriving (Show, Eq)
 
 parser :: Parser CmdOptions
 parser =
@@ -28,11 +35,15 @@ parser =
     <*> strOption
       ( long "builddir"
           <> value "dist-newstyle"
-          <> help "cabal builddir"
+          <> help "cabal project build dir"
       )
-    <*> (many . strArgument)
-      ( metavar "HOOGLE-ARGS"
+    <*> hsubparser
+      ( command "generate" (info (pure CommandGenerate) (progDesc "generate hoogle database"))
+          <> command "run" (info commandRunParser (progDesc "run hoogle, with arbitrary arguments"))
       )
+
+commandRunParser :: Parser Command
+commandRunParser = CommandRun <$> (many . strArgument) (metavar "ARGS")
 
 readCmdOptions :: IO CmdOptions
 readCmdOptions = execParser parserInfo
@@ -41,5 +52,8 @@ readCmdOptions = execParser parserInfo
       info
         (parser <**> helper)
         ( fullDesc
-            <> progDesc "Run hoogle on your local packages and dependencies"
+            <> progDesc
+              ( "Run hoogle on your local packages and dependencies. "
+                  <> "See https://github.com/kokobd/cabal-hoogle for more information"
+              )
         )
