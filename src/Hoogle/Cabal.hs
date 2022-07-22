@@ -87,9 +87,13 @@ enterSubDir baseDir realm givenSubDir = do
   subDirs <- listDirectory baseDir
   case givenSubDir >>= (\d -> if d `notElem` subDirs then Just d else Nothing) of
     Just wrongSubDir -> exitOnError [i|specified #{realm} #{wrongSubDir} doesn't not exist, make sure to build first|]
-    Nothing -> case subDirs of
-      [exactlyOne] -> pure $ baseDir </> exactlyOne
-      _ -> exitOnError [i|fail to guess #{realm}, please specify one|]
+    Nothing -> case selectSubDir subDirs givenSubDir of
+      Just subDir -> pure $ baseDir </> subDir
+      _ -> exitOnError [i|failed to guess #{realm}, please specify one|]
+  where
+    selectSubDir :: [FilePath] -> Maybe FilePath -> Maybe FilePath
+    selectSubDir [exactlyOne] _ = Just exactlyOne
+    selectSubDir _ given = given
 
 symlinkLocalPackages :: FilePath -> FilePath -> IO [LocalBuildInfo]
 symlinkLocalPackages localPackagesDir destDir = do
