@@ -63,3 +63,4 @@ test-suite tests
     , silently
   build-tool-depends:
     tasty-discover:tasty-discover
+    hoogle:hoogle

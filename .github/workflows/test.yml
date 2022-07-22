@@ -1,0 +1,42 @@
+on: [push]
+jobs:
+  test:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        cabal:
+          - "3.2.0.0"
+          - "3.4.1.0"
+          - "3.6.2.0"
+        ghc:
+          - "8.10"
+          - "9.0"
+          - "9.2"
+        exclude:
+          - cabal: "3.2.0.0"
+            ghc: "9.0"
+          - cabal: "3.2.0.0"
+            ghc: "9.2"
+          - cabal: "3.4.1.0"
+            ghc: "9.2"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: ${{ matrix.cabal }}
+      - name: Set Global Cabal Config
+        run: |
+          cabal user-config update -a "documentation: True
+          haddock
+            hoogle: True
+            html: True"
+      - name: Run Tests
+        run: cabal test --constraint="Cabal == ${{ matrix.cabal }}" --test-show-details=always all
