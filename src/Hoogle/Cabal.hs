@@ -36,7 +36,6 @@ import Prelude hiding (log)
 main :: IO ()
 main = do
   CmdOptions {..} <- readCmdOptions
-
   localPackagesDir <- findLocalPackagesBuildDir cmdOptions_compiler cmdOptions_platform cmdOptions_builddir
   let hoogleDir = localPackagesDir </> ".hoogle"
       hoogleLocalPackagesDir = hoogleDir </> "local"
