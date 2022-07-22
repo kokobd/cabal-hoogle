@@ -2,6 +2,9 @@
 
 Like `stack hoogle`, but works for cabal projects. Generates hoogle database of your local packages and all dependencies.
 
+- mininum GHC version: 8.10
+- minimum Cabal version: 3.2
+
 ## Installation
 
 Step 1, check the `Cabal` library version used by your cabal
@@ -23,7 +26,7 @@ cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 
 ### Prerequisite
 
-Make sure your `~/.cabal/config` has the following entries:
+Make sure your `~/.cabal/config` has the following entries. (DON'T remove other existing entries!) [Check the official docs](https://cabal.readthedocs.io/en/3.6/installing-packages.html) if you don't know where is your cabal's global configuration file 
 
 ```
 documentation: True
@@ -33,7 +36,9 @@ haddock
 ```
 
 Then, run `cabal build all` on your project, so that cabal will build haddock and
-hoogle files for your local packages and dependencies
+hoogle files for your local packages and dependencies.
+
+> Adding `--enable-documentation --haddock-hoogle --haddock-html` to your build command won't work for dependencies as I tried.
 
 ### Generate
 ```
@@ -54,4 +59,13 @@ cabal-hoogle run -- server --local --port 9000
 Or directly search in command line like this:
 ```
 cabal-hoogle run -- search catMaybes
+```
+
+### More Options
+
+Run `cabal-hoogle --help` to see more options. For example if you are using a non-default build dir (not `dist-newstyle`), or you have multiple GHC verisons on the same project.
+
+Below is a complex example:
+```
+cabal-hoogle --compiler ghc-9.2.3 --platform "x86_64-linux" --builddir mydist generate
 ```
