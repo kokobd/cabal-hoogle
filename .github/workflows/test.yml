@@ -2,11 +2,12 @@ on: [push]
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
-          - windows-latest
-          - macos-latest
+          # - windows-latest
+          # - macos-latest
         cabal:
           - "3.2.0.0"
           - "3.4.1.0"
@@ -28,10 +29,15 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v3
-      - uses: haskell/actions/setup@v2
-        with:
-          ghc-version: ${{ matrix.ghc }}
-          cabal-version: ${{ matrix.cabal }}
+      - name: Install Tools
+        run: |
+          ghcup upgrade
+          ghcup list
+          ghcup rm ghc 9.0.2
+          ghcup rm ghc 9.2.3
+          ghcup install ghc ${{ matrix.ghc }} --set
+          ghcup install cabal ${{ matrix.cabal }} --set
+          cabal update
       - name: Set Global Cabal Config
         run: |
           cabal user-config update -a "documentation: True
