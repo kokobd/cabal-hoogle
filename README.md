@@ -4,7 +4,7 @@
 
 Like `stack hoogle`, but works for cabal projects. Generates hoogle database of your local packages and all dependencies.
 
-<img src="https://user-images.githubusercontent.com/16440269/180608302-b4872f85-907c-4ab9-beb0-5977360864de.gif" width="600"/>
+<img src="https://user-images.githubusercontent.com/16440269/180609310-643ff9a1-c1eb-479a-b9ca-0cf69d65a62a.gif" width="600"/>
 
 ## Installation
 
