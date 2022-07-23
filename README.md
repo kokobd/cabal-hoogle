@@ -4,10 +4,12 @@
 
 Like `stack hoogle`, but works for cabal projects. Generates hoogle database of your local packages and all dependencies.
 
-- mininum GHC version: 8.10
-- minimum Cabal version: 3.2
+<img src="https://user-images.githubusercontent.com/16440269/180608302-b4872f85-907c-4ab9-beb0-5977360864de.gif" width="600"/>
 
 ## Installation
+
+Compiling from source requires a mininum GHC version of 8.10. Having `cabal-hoogle` installed, you may use it on a wider range of GHC,
+as long as the `Cabal` used to build `cabal-hoogle` and `cabal-install` match.
 
 Step 1, run `cabal update` to make sure you are using the latest hackage index
 
@@ -15,7 +17,7 @@ Step 2, check the `Cabal` library version used by your cabal
 ```
 cabal --version
 ```
-It shows my cabal is using `3.6.3.0` of Cabal library
+It shows my cabal is using `3.6.3.0` of Cabal library. **`cabal-hoogle` requires at least Cabal 3.2**. Update it before continue.
 ```
 cabal-install version 3.6.2.0
 compiled using version 3.6.3.0 of the Cabal library 
