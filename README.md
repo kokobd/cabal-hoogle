@@ -30,13 +30,21 @@ cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 
 ### Prerequisite
 
-Make sure your `~/.cabal/config` has the following entries. (DON'T remove other existing entries!) [Check the official docs](https://cabal.readthedocs.io/en/3.6/installing-packages.html) if you don't know where is your cabal's global configuration file 
+Make sure your `~/.cabal/config` has the following entries. (DON'T remove existing entries!) [Check the official docs](https://cabal.readthedocs.io/en/3.6/installing-packages.html) if you don't know where is your cabal's global configuration file 
 
 ```
 documentation: True
 haddock
   hoogle: True
   html: True
+```
+
+Or, run this command in bash:
+```
+cabal user-config update -a "documentation: True
+haddock
+  hoogle: True
+  html: True"
 ```
 
 Then, run `cabal build all` on your project, so that cabal will build haddock and
@@ -73,3 +81,20 @@ Below is a complex example:
 ```
 cabal-hoogle --compiler ghc-9.2.3 --platform "x86_64-linux" --builddir mydist generate
 ```
+
+## FAQ
+
+### Many packages missing documentation
+
+If you see output like this when running `cabal-hoogle generate`
+```
+Packages missing documentation: ansi-terminal ansi-wl-pprint async base-orphans base16-bytestring base64-bytestring Cabal cabal-hoogle clock colour extra hashable haskell-src-exts haskell-src-meta optparse-applicative primitive regex-base regex-tdfa safe split string-interpolate syb text-conversions th-abstraction th-compat th-expand-syns th-lift th-lift-instances th-orphans th-reify-many transformers-compat typed-process unliftio-core utf8-string vector vector-stream
+Found 27 warnings when processing items
+```
+
+Probably you haven't built dependencies with hoogle enabled. Check [prerequisites](#prerequisite) more carefully.
+
+### Cabal version mismatch
+
+Make sure to build `cabal-hoogle` with the exact same `Cabal` library as your `cabal-install`. You can use `cabal --version`
+to check the version of `Cabal` library. See [Installation](#installation).
