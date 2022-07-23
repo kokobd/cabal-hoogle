@@ -30,6 +30,10 @@ cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 
 ### Prerequisite
 
+#### Install Hoogle
+Make sure `hoogle` is installed in your `$PATH`. You can do this by running `cabal install hoogle`
+
+#### Enable Hoogle for Cabal
 Make sure your `~/.cabal/config` has the following entries. (DON'T remove existing entries!) [Check the official docs](https://cabal.readthedocs.io/en/3.6/installing-packages.html) if you don't know where is your cabal's global configuration file 
 
 ```
@@ -47,10 +51,12 @@ haddock
   html: True"
 ```
 
+#### Build Project with Cabal
+
 Then, run `cabal build all` on your project, so that cabal will build haddock and
 hoogle files for your local packages and dependencies.
 
-> Adding `--enable-documentation --haddock-hoogle --haddock-html` to your build command won't work for dependencies as I tried.
+> NOTE: Adding `--enable-documentation --haddock-hoogle --haddock-html` to your build command won't work for dependencies as I tried.
 
 ### Generate
 ```
@@ -98,3 +104,8 @@ Probably you haven't built dependencies with hoogle enabled. Check [prerequisite
 
 Make sure to build `cabal-hoogle` with the exact same `Cabal` library as your `cabal-install`. You can use `cabal --version`
 to check the version of `Cabal` library. See [Installation](#installation).
+
+### Core libraries missing documentation
+
+If you are on macOS or Windows, and using `ghcup`, your `ghc` probably doesn't come with docs.
+See [this](https://gitlab.haskell.org/ghc/ghc/-/issues/20903) and [this](https://github.com/haskell/haskell-language-server/issues/208#issuecomment-1162169087) for details of the upstream issue.

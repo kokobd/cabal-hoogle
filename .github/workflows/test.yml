@@ -17,11 +17,21 @@ jobs:
           - "9.0"
           - "9.2"
         exclude:
+        # old cabal doesn't build on new ghc
           - cabal: "3.2.0.0"
             ghc: "9.0"
           - cabal: "3.2.0.0"
             ghc: "9.2"
           - cabal: "3.4.1.0"
+            ghc: "9.2"
+        # precompiled 9.0 and 9.2 doesn't have docs
+          - os: windows-latest
+            ghc: "9.0"
+          - os: windows-latest
+            ghc: "9.2"
+          - os: macos-latest
+            ghc: "9.0"
+          - os: macos-latest
             ghc: "9.2"
     runs-on: ${{ matrix.os }}
     defaults:
