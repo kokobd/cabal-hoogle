@@ -8,7 +8,7 @@ Like `stack hoogle`, but works for cabal projects. Generates hoogle database of 
 
 ## Installation
 
-Compiling from source requires a mininum GHC version of 8.10. Having `cabal-hoogle` installed, you may use it on a wider range of GHC,
+Compiling from source requires a minimum GHC version of 8.10. Having `cabal-hoogle` installed, you may use it on a wider range of GHC,
 as long as the `Cabal` used to build `cabal-hoogle` and `cabal-install` match.
 
 Step 1, run `cabal update` to make sure you are using the latest hackage index
