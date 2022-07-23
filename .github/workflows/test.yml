@@ -6,8 +6,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # - windows-latest
-          # - macos-latest
+          - windows-latest
+          - macos-latest
         cabal:
           - "3.2.0.0"
           - "3.4.1.0"
@@ -30,12 +30,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Tools
+        env:
+          GHCUP_CURL_OPTS: "--suppress-connect-headers"
         run: |
           ghcup upgrade
           ghcup list
-          ghcup rm ghc 9.0.2
-          ghcup rm ghc 9.2.3
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            ghcup rm ghc 8.10.7
+          fi
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            ghcup rm ghc 9.0.2
+            ghcup rm ghc 9.2.3
+          fi
+          which ghc || true
           ghcup install ghc ${{ matrix.ghc }} --set
+          which ghc || true
           ghcup install cabal ${{ matrix.cabal }} --set
           cabal update
       - name: Set Global Cabal Config
@@ -46,3 +55,8 @@ jobs:
             html: True"
       - name: Run Tests
         run: cabal test --constraint="Cabal == ${{ matrix.cabal }}" --test-show-details=always all
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
