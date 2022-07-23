@@ -1,5 +1,7 @@
 # cabal-hoogle
 
+![GitHub Action Badge](https://github.com/kokobd/cabal-hoogle/actions/workflows/test.yml/badge.svg?branch=main)
+
 Like `stack hoogle`, but works for cabal projects. Generates hoogle database of your local packages and all dependencies.
 
 - mininum GHC version: 8.10
@@ -7,7 +9,9 @@ Like `stack hoogle`, but works for cabal projects. Generates hoogle database of 
 
 ## Installation
 
-Step 1, check the `Cabal` library version used by your cabal
+Step 1, run `cabal update` to make sure you are using the latest hackage index
+
+Step 2, check the `Cabal` library version used by your cabal
 ```
 cabal --version
 ```
@@ -17,7 +21,7 @@ cabal-install version 3.6.2.0
 compiled using version 3.6.3.0 of the Cabal library 
 ```
 
-Step 2, use `cabal install` to install `cabal-hoogle` from Hackage, specifying the `Cabal` library version you fetched above.
+Step 3, use `cabal install` to install `cabal-hoogle` from Hackage, specifying the `Cabal` library version you fetched above.
 ```
 cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 ```
