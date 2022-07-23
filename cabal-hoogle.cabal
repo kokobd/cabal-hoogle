@@ -60,7 +60,7 @@ test-suite tests
     , cabal-hoogle
     , tasty ^>= 1.4.2.3
     , tasty-hunit ^>= 0.10.0.3
-    , silently
+    , silently ^>= 1.2.5.2
   build-tool-depends:
     , tasty-discover:tasty-discover
     , hoogle:hoogle
