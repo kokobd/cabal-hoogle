@@ -16,6 +16,10 @@ extra-source-files:
     CHANGELOG.md
     README.md
 
+source-repository head
+  type:     git
+  location: https://github.com/kokobd/cabal-hoogle
+
 library
     build-depends:
         base >= 4.14 && < 5
