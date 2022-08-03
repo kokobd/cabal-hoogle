@@ -111,3 +111,10 @@ to check the version of `Cabal` library. See [Installation](#installation).
 
 If you are on macOS or Windows, and using `ghcup`, your `ghc` probably doesn't come with docs.
 See [this](https://gitlab.haskell.org/ghc/ghc/-/issues/20903) and [this](https://github.com/haskell/haskell-language-server/issues/208#issuecomment-1162169087) for details of the upstream issue.
+
+## Roadmap
+
+After Cabal 3.8 is released, I will
+
+- [ ] Use `cabal-install` library to get the structure of `dist-newstyle` instead of guessing it.
+- [ ] Automatically build haddock html and hoogle txt files when `generate` runs.
