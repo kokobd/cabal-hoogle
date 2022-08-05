@@ -50,7 +50,7 @@ jobs:
           fi
           if [ "$RUNNER_OS" != "Windows" ]; then
             ghcup rm ghc 9.0.2
-            ghcup rm ghc 9.2.3
+            ghcup rm ghc 9.2.4
           fi
           which ghc || true
           ghcup install ghc ${{ matrix.ghc }} --set
