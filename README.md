@@ -28,6 +28,13 @@ Step 3, use `cabal install` to install `cabal-hoogle` from Hackage, specifying t
 cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 ```
 
+Note that if your package uses a custom `Setup.hs`, you **MUST** set `Cabal` version to match `cabal` and `cabal-hoogle`, otherwise it wont' work.
+For example, add this `cabal.project.local` to your project:
+```
+constraints:
+  Cabal == 3.6.3.0
+```
+
 ## Usage
 
 ### Prerequisite
@@ -39,26 +46,27 @@ Make sure `hoogle` is installed in your `$PATH`. You can do this by running `cab
 Make sure your `~/.cabal/config` has the following entries. (DON'T remove existing entries!) [Check the official docs](https://cabal.readthedocs.io/en/3.6/installing-packages.html) if you don't know where is your cabal's global configuration file 
 
 ```
-documentation: True
 haddock
   hoogle: True
   html: True
+  hyperlink-source: True
+  quickjump: True
 ```
 
 Or, run this command in bash:
 ```
-cabal user-config update -a "documentation: True
+cabal user-config update -a "
 haddock
   hoogle: True
-  html: True"
+  html: True
+  hyperlink-source: True
+  quickjump: True
 ```
 
 #### Build Project with Cabal
 
-Then, run `cabal build all` on your project, so that cabal will build haddock and
+Then, run `cabal build --enable-documentation all` on your project, so that cabal will build haddock and
 hoogle files for your local packages and dependencies.
-
-> NOTE: Adding `--enable-documentation --haddock-hoogle --haddock-html` to your build command won't work for dependencies as I tried.
 
 ### Generate
 ```
@@ -111,6 +119,10 @@ to check the version of `Cabal` library. See [Installation](#installation).
 
 If you are on macOS or Windows, and using `ghcup`, your `ghc` probably doesn't come with docs.
 See [this](https://gitlab.haskell.org/ghc/ghc/-/issues/20903) and [this](https://github.com/haskell/haskell-language-server/issues/208#issuecomment-1162169087) for details of the upstream issue.
+
+### Run "configure" first
+
+If you see this message from the output, it means a package doesn't have a `setup-config` file. This could happen if your package doesn't have a `library` section, or you were building with optimization level 0 or 2 (we are reading the build products with default optimization level of library only)
 
 ## Roadmap
 
