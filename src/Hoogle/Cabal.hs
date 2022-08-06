@@ -17,7 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Traversable (forM)
 import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs, installedUnitId))
-import Distribution.Simple.Configure (getPersistBuildConfig)
+import Distribution.Simple.Configure (tryGetPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
 import Distribution.Types.LocalBuildInfo (LocalBuildInfo, installedPkgs, localPkgDescr)
 import Distribution.Types.PackageDescription (PackageDescription (package))
@@ -98,11 +98,16 @@ enterSubDir baseDir realm givenSubDir = do
 symlinkLocalPackages :: FilePath -> FilePath -> IO [LocalBuildInfo]
 symlinkLocalPackages localPackagesDir destDir = do
   localPackages <- filter (=~ packageNameRegex) <$> listDirectory localPackagesDir
-  forM localPackages $ \pkg -> do
+  fmap catMaybes . forM localPackages $ \pkg -> do
     catch (removeDirectoryLink (destDir </> pkg)) $ \(e :: IOError) ->
       if isDoesNotExistError e then pure () else throw e
     createDirectoryLink (localPackagesDir </> pkg) (destDir </> pkg)
-    getPersistBuildConfig (localPackagesDir </> pkg)
+    lbiEither <- tryGetPersistBuildConfig (localPackagesDir </> pkg)
+    case lbiEither of
+      Left configStateFileErr -> do
+        T.putStrLn [i|Can not read setup-config file from #{pkg}, error: #{configStateFileErr}|]
+        pure Nothing
+      Right lbi -> pure $ Just lbi
   where
     packageNameRegex :: String =
       "[[:digit:]]*[[:alpha:]][[:alnum:]]*(-[[:digit:]]*[[:alpha:]][[:alnum:]]*)*-[0-9]+([.][0-9]+)*"
