@@ -28,7 +28,7 @@ Step 3, use `cabal install` to install `cabal-hoogle` from Hackage, specifying t
 cabal install --constraint="Cabal == 3.6.3.0" cabal-hoogle
 ```
 
-Note that if your package uses a custom `Setup.hs`, you **MUST** set `Cabal` version to match `cabal` and `cabal-hoogle`, otherwise it wont' work.
+Note that if your package uses a custom `Setup.hs`, you **MUST** set `Cabal` version to match `cabal` and `cabal-hoogle`, otherwise it won't work.
 For example, add this `cabal.project.local` to your project:
 ```
 constraints:
