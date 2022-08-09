@@ -9,11 +9,11 @@ RUN sudo chown -R gitpod: $HOME/.cabal && \
     echo 'source $HOME/.ghcup/env' >> $HOME/.bashrc && \
     echo 'export PATH=$HOME/.cabal/bin:$HOME/.local/bin:$PATH' >> $HOME/.bashrc && \
     . /home/gitpod/.ghcup/env && \
-    ghcup install ghc 9.2.2 --set && \
-    ghcup install hls --set && \
+    ghcup install ghc 9.2.4 --set && \
     ghcup install cabal --set && \
     ghcup install stack --set && \
     cabal update && \
+    ghcup compile hls -g master --ghc 9.2.4 --set && \
     cabal install implicit-hie hoogle && \
     pip install pre-commit && \
     npm install -g http-server

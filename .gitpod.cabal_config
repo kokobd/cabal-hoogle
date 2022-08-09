@@ -15,3 +15,5 @@ installdir: /home/gitpod/.cabal/bin
 haddock
   hoogle: True
   html: True
+  hyperlink-source: True
+  quickjump: True
