@@ -19,6 +19,7 @@ data CmdOptions = CmdOptions
 data Command
   = CommandGenerate
   | CommandRun [String]
+  | CommandActAsSetup String [String]
   deriving (Show, Eq)
 
 parser :: Parser CmdOptions
@@ -40,10 +41,16 @@ parser =
     <*> hsubparser
       ( command "generate" (info (pure CommandGenerate) (progDesc "generate hoogle database"))
           <> command "run" (info commandRunParser (progDesc "run hoogle, with arbitrary arguments"))
+          <> command "act-as-setup" (info commandActAsSetupParser (progDesc "internal command to workaround a cabal issue"))
       )
 
 commandRunParser :: Parser Command
 commandRunParser = CommandRun <$> (many . strArgument) (metavar "ARGS")
+
+commandActAsSetupParser :: Parser Command
+commandActAsSetupParser = CommandActAsSetup
+  <$> strOption (long "build-type")
+  <*> (many . strArgument) (metavar "ARGS")
 
 readCmdOptions :: IO CmdOptions
 readCmdOptions = execParser parserInfo
