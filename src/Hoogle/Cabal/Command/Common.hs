@@ -1,6 +1,7 @@
 module Hoogle.Cabal.Command.Common
   ( GlobalOptions (..),
-    globalOptionsParser
+    globalOptionsParser,
+    hoogleDatabaseArg
   )
 where
 
@@ -20,3 +21,6 @@ globalOptionsParser =
           <> value "dist-newstyle/hoogle"
           <> help "cabal project build dir"
       )
+
+hoogleDatabaseArg :: String
+hoogleDatabaseArg = "--database=all.hoo"
