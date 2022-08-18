@@ -8,7 +8,6 @@ import Hoogle.Cabal.Logger (stdoutLogger)
 main :: IO ()
 main = executeCommand stdoutLogger
 
--- args <- getArgs
 -- putStrLn $ "args: " <> show args
 -- options@CmdOptions {..} <- readCmdOptions
 -- localPackagesDir <- findLocalPackagesBuildDir cmdOptions_compiler cmdOptions_platform cmdOptions_builddir

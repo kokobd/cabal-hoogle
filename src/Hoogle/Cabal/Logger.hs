@@ -2,12 +2,14 @@ module Hoogle.Cabal.Logger
   ( Logger,
     cmapLogger,
     stdoutLogger,
+    logWith,
     module Colog.Core,
   )
 where
 
 import Colog.Core
 import Data.Time (getCurrentTime)
+import Control.Monad.IO.Class
 
 type Logger msg = LogAction IO (WithSeverity msg)
 
@@ -27,3 +29,6 @@ stdoutLogger = LogAction $ \msg -> do
         ++ show time
         ++ "] "
         ++ show msg
+
+logWith :: MonadIO m => Logger msg -> Severity -> msg -> m ()
+logWith logger severity msg = liftIO $ unLogAction logger (WithSeverity msg severity)

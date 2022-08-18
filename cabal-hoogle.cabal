@@ -49,7 +49,6 @@ library
     exposed-modules:
         Hoogle.Cabal
     other-modules:
-        Hoogle.Cabal.CmdOptions
         Hoogle.Cabal.Command
         Hoogle.Cabal.Command.ActAsSetup
         Hoogle.Cabal.Command.Generate
