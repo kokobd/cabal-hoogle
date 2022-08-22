@@ -16,7 +16,7 @@ import Distribution.Client.DistDirLayout (distDirectory)
 import Distribution.Client.NixStyleOptions
 import Distribution.Client.ProjectOrchestration
 import Distribution.Client.ScriptUtils
-import Distribution.Client.Setup (InstallFlags (..), GlobalFlags, defaultGlobalFlags)
+import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
 import Distribution.Simple.Setup (ConfigFlags (..), Flag (..), HaddockFlags (..))
 import Distribution.Simple.Utils (die')
