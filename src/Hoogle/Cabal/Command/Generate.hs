@@ -12,6 +12,8 @@ where
 
 import Control.Exception (catch, throw)
 import Control.Monad (unless)
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Maybe
 import Data.Bifunctor (Bifunctor (second))
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NonEmpty
@@ -29,15 +31,18 @@ import Distribution.Client.ProjectOrchestration
   ( ProjectBaseContext (distDirLayout),
     ProjectBuildContext (elaboratedPlanToExecute, elaboratedShared, targetsMap),
   )
-import Distribution.Client.ProjectPlanning.Types (ElaboratedConfiguredPackage, elabDistDirParams)
+import Distribution.Client.ProjectPlanning (ElaboratedConfiguredPackage)
+import Distribution.Client.ProjectPlanning.Types (elabDistDirParams)
 import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs, installedUnitId))
-import Distribution.Simple (UnitId, pkgName)
+import Distribution.Simple (UnitId)
 import Distribution.Simple.Configure (ConfigStateFileError, tryGetPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
 import Distribution.Types.LocalBuildInfo (LocalBuildInfo)
 import qualified Distribution.Types.LocalBuildInfo as LocalBuildInfo
 import qualified Distribution.Types.PackageDescription as PackageDescription
-import Distribution.Types.PackageName (PackageName, unPackageName)
+import qualified Distribution.Types.PackageId as PackageId
+import Distribution.Types.PackageName (PackageName)
+import qualified Distribution.Types.PackageName as PackageName
 import qualified Hoogle
 import Hoogle.Cabal.Command.Common (Context (..), GlobalOptions (..), hoogleDatabaseArg, readContext)
 import Hoogle.Cabal.Logger
@@ -109,26 +114,32 @@ action logger globalOptions (Command targets) = do
   createDirectoryIfMissing True hoogleLocalPackagesDir
   createDirectoryIfMissing True hoogleDependenciesDir
   localPackagesBuildInfo <- symlinkLocalPackages logger localPackages hoogleLocalPackagesDir
-  let localPkgsName = fmap (pkgName . PackageDescription.package . LocalBuildInfo.localPkgDescr) localPackagesBuildInfo
-  dependenciesName <- symlinkDependencies logger localPackagesBuildInfo hoogleDependenciesDir
-  let nameStrs = fmap unPackageName (localPkgsName <> dependenciesName)
+  let localPkgsName = fmap fst localPackagesBuildInfo
+  dependenciesName <- symlinkDependencies logger (fmap snd localPackagesBuildInfo) hoogleDependenciesDir
+  let nameStrs = localPkgsName <> fmap PackageName.unPackageName dependenciesName
   withCurrentDirectory hoogleDir $
     Hoogle.hoogle $
       ["generate", hoogleDatabaseArg, "--local=local", "--local=dependencies"] ++ nameStrs
 
-symlinkLocalPackages :: Logger Log -> [FilePath] -> FilePath -> IO [LocalBuildInfo]
-symlinkLocalPackages logger localPackages destDir = do
-  fmap catMaybes . forM localPackages $ \pkg -> do
-    let pkgName = takeFileName pkg
-    catch (removeDirectoryLink (destDir </> pkgName)) $ \(e :: IOError) ->
-      if isDoesNotExistError e then pure () else throw e
-    createDirectoryLink pkg (destDir </> pkgName)
-    lbiEither <- tryGetPersistBuildConfig pkg
-    case lbiEither of
+symlinkLocalPackages :: Logger Log -> [FilePath] -> FilePath -> IO [(String, LocalBuildInfo)]
+symlinkLocalPackages logger pkgsPath destDir = do
+  fmap catMaybes . forM pkgsPath $ \pkgPath -> runMaybeT $ do
+    lbiEither <- liftIO $ tryGetPersistBuildConfig pkgPath
+    lbi <- MaybeT $ case lbiEither of
       Left configStateFileErr -> do
-        logWith logger Error $ LogCanNotReadSetupConfig pkgName configStateFileErr
+        logWith logger Error $ LogCanNotReadSetupConfig pkgPath configStateFileErr
         pure Nothing
       Right lbi -> pure $ Just lbi
+    let pkgName =
+          PackageName.unPackageName
+            . PackageId.pkgName
+            . PackageDescription.package
+            . LocalBuildInfo.localPkgDescr
+            $ lbi
+    liftIO $ catch (removeDirectoryLink (destDir </> pkgName)) $ \(e :: IOError) ->
+      if isDoesNotExistError e then pure () else throw e
+    liftIO $ createDirectoryLink pkgPath (destDir </> pkgName)
+    pure (pkgName, lbi)
 
 symlinkDependencies :: Logger Log -> [LocalBuildInfo] -> FilePath -> IO [PackageName]
 symlinkDependencies logger localPackages hoogleDependenciesDir = do
@@ -145,7 +156,7 @@ symlinkDependencies logger localPackages hoogleDependenciesDir = do
         logWith logger Warning $ LogPkgBadHaddockHtml name htmlDirs
         pure Nothing
   forM pkgs $ \(name, dir) -> do
-    createDirectoryLink dir (hoogleDependenciesDir </> unPackageName name)
+    createDirectoryLink dir (hoogleDependenciesDir </> PackageName.unPackageName name)
     pure name
   where
     collectDependenciesForPkg pkg =
