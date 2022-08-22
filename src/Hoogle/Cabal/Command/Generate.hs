@@ -90,21 +90,20 @@ commandParser =
 
 action :: Logger Log -> GlobalOptions -> Command -> IO ()
 action logger globalOptions (Command targets) = do
-  (Context baseCtx _ hoogleDir targetStrings flags globalFlags) <- readContext globalOptions targets
+  (Context baseCtx buildCtx hoogleDir targetStrings flags globalFlags) <- readContext globalOptions targets
   buildAction flags targetStrings globalFlags
-  Context{..} <- readContext globalOptions targets
-  let buildCtx = _context_buildCtx
-      targetIds = Map.keys (targetsMap buildCtx)
+  let targetIds = Map.keys (targetsMap buildCtx)
       installPlan = elaboratedPlanToExecute buildCtx
       hoogleLocalPackagesDir = hoogleDir </> "local"
       hoogleDependenciesDir = hoogleDir </> "dependencies"
   localPackages <- fmap catMaybes . forM targetIds $ \targetId ->
-    case InstallPlan.lookup installPlan targetId of
-      Just (InstallPlan.Installed pkg) ->
-        pure . Just $ distBuildDirectory (distDirLayout baseCtx) $ elabDistDirParams (elaboratedShared buildCtx) pkg
-      pkg -> do
-        logWith logger Error (LogBadInstallPlan targetId pkg)
-        pure Nothing
+    let handlePkg pkg = pure . Just $ distBuildDirectory (distDirLayout baseCtx) $ elabDistDirParams (elaboratedShared buildCtx) pkg
+     in case InstallPlan.lookup installPlan targetId of
+          Just (InstallPlan.Installed pkg) -> handlePkg pkg
+          Just (InstallPlan.Configured pkg) -> handlePkg pkg
+          pkg -> do
+            logWith logger Error (LogBadInstallPlan targetId pkg)
+            pure Nothing
   catch (removeDirectoryRecursive hoogleDir) $ \(err :: IOError) ->
     if isDoesNotExistError err then pure () else throw err
   createDirectoryIfMissing True hoogleLocalPackagesDir
