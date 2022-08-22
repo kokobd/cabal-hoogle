@@ -79,5 +79,4 @@ test-suite tests
     , tasty-hunit ^>= 0.10.0.3
     , silently ^>= 1.2.5.2
   build-tool-depends:
-    , tasty-discover:tasty-discover
-    , hoogle:hoogle
+      tasty-discover:tasty-discover
