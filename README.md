@@ -17,24 +17,25 @@ cabal install exe:cabal-hoogle
 ## Usage
 
 ### Generate
+Within your project, run:
+
 ```
 cabal-hoogle generate
 ```
 
-This generates the hoogle database. You will see logs very similar to `stack hoogle --rebuild`
+This generates a hoogle database for all the local packages and their dependencies.
 
-You may specify targets, like:
+You may specify targets, like below:
 ```
-cabal-hoogle generate exe:haskell-language-server
+cabal-hoogle generate exe:haskell-language-server hls-code-range-plugin
 ```
-This is very useful if you have many local packages in your `cabal.project`,
-and some of them don't build.
+See [Cabal Docs](https://cabal.readthedocs.io/en/3.8/cabal-commands.html#target-forms) for target syntax
 
 ### Run Hoogle
 
 With `cabal-hoogle run --`, extra arguments are passed directly to `hoogle`.
 
-You may start a server like this:
+You may start an http server like this:
 ```
 cabal-hoogle run -- server --local --port 9000
 ```
