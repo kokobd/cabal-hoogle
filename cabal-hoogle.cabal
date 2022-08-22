@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               cabal-hoogle
-version:            0.1.0.0
+version:            0.2.0
 synopsis:           generate hoogle database for cabal project and dependencies
 description:
   Please see the README on GitHub at <https://github.com/kokobd/cabal-hoogle>
