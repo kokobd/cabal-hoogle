@@ -9,19 +9,19 @@ jobs:
           - windows-latest
           - macos-latest
         ghc:
-          - "8.10"
-          - "9.0"
-          - "9.2"
+          - "8.10.7"
+          - "9.0.2"
+          - "9.2.4"
         exclude:
         # precompiled 9.0 and 9.2 don't have docs
           - os: windows-latest
-            ghc: "9.0"
+            ghc: "9.0.2"
           - os: windows-latest
-            ghc: "9.2"
+            ghc: "9.2.4"
           - os: macos-latest
-            ghc: "9.0"
+            ghc: "9.0.2"
           - os: macos-latest
-            ghc: "9.2"
+            ghc: "9.2.4"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -34,12 +34,7 @@ jobs:
         run: |
           ghcup upgrade
           ghcup list
-          if [ "$RUNNER_OS" == "macOS" ]; then
-            ghcup rm ghc 8.10.7 || true
-          fi
-          if [ "$RUNNER_OS" != "Windows" ]; then
-            ghcup rm ghc 9.4.1 || true
-          fi
+          ghcup rm ghc ${{ matrix.ghc }} || true
           ghcup install ghc ${{ matrix.ghc }} --set
           ghcup install cabal ${{ matrix.cabal }} --set
           cabal update
