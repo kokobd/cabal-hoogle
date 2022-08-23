@@ -18,7 +18,7 @@ test_searchInCommandLine = do
           wantResult `isInfixOf` output @? "actual output: " <> output
 
   pure
-    [ testCase' "test dependency doesn't work" ["testCase"] "No results found",
+    [ testCase' "test dependency" ["testCase"] "Test.QuickCheck failingTestCase :: Result -> [String]",
       testCase' "core library" ["lift"] "Control.Monad.Trans.Class lift",
-      testCase' "non-core library" ["runProcess_"] "System.Process.Typed runProcess_"
+      testCase' "non-core library" ["progDesc"] "Options.Applicative progDesc :: String -> InfoMod a"
     ]
