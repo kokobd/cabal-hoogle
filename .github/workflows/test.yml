@@ -34,6 +34,12 @@ jobs:
         run: |
           ghcup upgrade
           ghcup list
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            ghcup rm ghc 8.10.7 || true
+          fi
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            ghcup rm ghc 9.4.1 || true
+          fi
           ghcup install ghc ${{ matrix.ghc }} --set
           ghcup install cabal ${{ matrix.cabal }} --set
           cabal update
