@@ -6,12 +6,12 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - windows-latest
           - macos-latest
         ghc:
           - "8.10.7"
           - "9.0.2"
           - "9.2.4"
+          - "9.4.1"
         exclude:
         # precompiled 9.0 and 9.2 don't have docs
           - os: windows-latest
