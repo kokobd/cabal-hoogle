@@ -11,10 +11,6 @@ jobs:
           - "8.10.7"
           - "9.0.2"
           - "9.2.4"
-          - "9.4.1"
-        cabal:
-          - "3.6.2.0"
-          - "3.8.1.0"
         exclude:
         # precompiled 9.0 and 9.2 don't have docs
           - os: macos-latest
@@ -35,7 +31,7 @@ jobs:
           ghcup list
           ghcup rm ghc ${{ matrix.ghc }} || true
           ghcup install ghc ${{ matrix.ghc }} --set
-          ghcup install cabal ${{ matrix.cabal }} --set
+          ghcup install cabal 3.6.2.0 --set
           cabal update
       - name: Build
         run: |
