@@ -20,9 +20,9 @@ data Command = Command
 
 command :: (Command -> a) -> OptParse.Mod OptParse.CommandFields a
 command f =
-  (OptParse.internal <>) $
-    OptParse.command "act-as-setup" $
-      OptParse.info (fmap f commandParser) (OptParse.progDesc "Run as-if this was a Setup.hs")
+  OptParse.command
+    "act-as-setup"
+    (OptParse.info (fmap f commandParser) (OptParse.progDesc "(Internal) Run as-if this was a Setup.hs"))
 
 commandParser :: OptParse.Parser Command
 commandParser =

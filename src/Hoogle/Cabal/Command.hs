@@ -6,12 +6,13 @@ import qualified Hoogle.Cabal.Command.ActAsSetup as ActAsSetup
 import Hoogle.Cabal.Command.Common
 import qualified Hoogle.Cabal.Command.Generate as Generate
 import qualified Hoogle.Cabal.Command.Run as Run
+import qualified Hoogle.Cabal.Command.Version as Version
 import Hoogle.Cabal.Logger
 import Options.Applicative
 
 data CmdOptions = CmdOptions
   { _cmdOptions_global :: GlobalOptions,
-    _cmdOptions_command :: Command
+    _cmdOptions_command :: Maybe Command
   }
   deriving (Show, Eq)
 
@@ -19,6 +20,7 @@ data Command
   = CommandGenerate Generate.Command
   | CommandRun Run.Command
   | CommandActAsSetup ActAsSetup.Command
+  | CommandVersion Version.Command
   deriving (Show, Eq)
 
 data Log
@@ -32,19 +34,27 @@ instance Show Log where
 executeCommand :: Logger Log -> IO ()
 executeCommand logger = do
   CmdOptions {..} <- readCmdOptions
-  case _cmdOptions_command of
-    CommandGenerate cmd -> Generate.action (cmapLogger LogGenerate logger) _cmdOptions_global cmd
-    CommandActAsSetup cmd -> ActAsSetup.action cmd
-    CommandRun cmd -> Run.action (cmapLogger LogRun logger) _cmdOptions_global cmd
+  if _globalOptions_version _cmdOptions_global
+    then Version.action Version.Command
+    else case _cmdOptions_command of
+      Nothing -> pure ()
+      Just cmd' -> case cmd' of
+        CommandGenerate cmd -> Generate.action (cmapLogger LogGenerate logger) _cmdOptions_global cmd
+        CommandActAsSetup cmd -> ActAsSetup.action cmd
+        CommandRun cmd -> Run.action (cmapLogger LogRun logger) _cmdOptions_global cmd
+        CommandVersion cmd -> Version.action cmd
 
 parser :: Parser CmdOptions
 parser =
   CmdOptions
     <$> globalOptionsParser
-    <*> hsubparser
-      ( Generate.command CommandGenerate
-          <> Run.command CommandRun
-          <> ActAsSetup.command CommandActAsSetup
+    <*> optional
+      ( hsubparser
+          ( Generate.command CommandGenerate
+              <> Run.command CommandRun
+              <> Version.command CommandVersion
+              <> ActAsSetup.command CommandActAsSetup
+          )
       )
 
 readCmdOptions :: IO CmdOptions

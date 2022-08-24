@@ -38,6 +38,9 @@ jobs:
           ghcup install ghc ${{ matrix.ghc }} --set
           ghcup install cabal ${{ matrix.cabal }} --set
           cabal update
+      - name: Build
+        run: |
+          cabal build all --enable-tests
       - name: Run Tests
         run: cabal test --test-show-details=always all
       - name: Setup tmate session
