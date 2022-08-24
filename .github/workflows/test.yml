@@ -12,12 +12,11 @@ jobs:
           - "9.0.2"
           - "9.2.4"
           - "9.4.1"
+        cabal:
+          - "3.6.2.0"
+          - "3.8.1.0"
         exclude:
         # precompiled 9.0 and 9.2 don't have docs
-          - os: windows-latest
-            ghc: "9.0.2"
-          - os: windows-latest
-            ghc: "9.2.4"
           - os: macos-latest
             ghc: "9.0.2"
           - os: macos-latest
