@@ -53,6 +53,7 @@ library
         Hoogle.Cabal.Command.ActAsSetup
         Hoogle.Cabal.Command.Generate
         Hoogle.Cabal.Command.Run
+        Hoogle.Cabal.Command.Version
         Hoogle.Cabal.Command.Common
         Hoogle.Cabal.Logger
 

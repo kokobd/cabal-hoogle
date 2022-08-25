@@ -20,7 +20,7 @@ newtype Command = Command
   deriving (Show, Eq)
 
 command :: (Command -> a) -> OptParse.Mod OptParse.CommandFields a
-command f = OptParse.command "run" (OptParse.info (fmap f commandParser) (OptParse.progDesc "run hoogle, with arbitrary arguments"))
+command f = OptParse.command "run" (OptParse.info (fmap f commandParser) (OptParse.progDesc "Run hoogle, with arbitrary arguments"))
 
 commandParser :: OptParse.Parser Command
 commandParser = Command <$> (OptParse.many . OptParse.strArgument) (OptParse.metavar "ARGS")

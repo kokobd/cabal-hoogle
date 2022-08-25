@@ -86,7 +86,7 @@ command f =
   OptParse.command "generate" $
     OptParse.info
       (fmap f commandParser)
-      (OptParse.progDesc "generate hoogle database")
+      (OptParse.progDesc "Generate hoogle database")
 
 commandParser :: OptParse.Parser Command
 commandParser =

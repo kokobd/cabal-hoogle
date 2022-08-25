@@ -24,8 +24,9 @@ import qualified Distribution.Verbosity as Verbosity
 import Options.Applicative
 import System.FilePath ((</>))
 
-newtype GlobalOptions = GlobalOptions
-  { _globalOptions_builddir :: FilePath
+data GlobalOptions = GlobalOptions
+  { _globalOptions_builddir :: FilePath,
+    _globalOptions_version :: Bool
   }
   deriving (Show, Eq)
 
@@ -35,7 +36,11 @@ globalOptionsParser =
     <$> strOption
       ( long "builddir"
           <> value "dist-newstyle/hoogle"
-          <> help "cabal project build dir"
+          <> help "Cabal project build dir"
+      )
+    <*> switch
+      ( long "version"
+          <> help "Print version"
       )
 
 hoogleDatabaseArg :: String
