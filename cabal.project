@@ -2,7 +2,24 @@ packages: ./
 
 source-repository-package
   type: git
-  location: https://github.com/kokobd/cabal
-  tag: 23dd1d4a0601e23b35532527a132f7dd419c264f
+  location: https://github.com/haskell/cabal
+  tag: a94904c72f7e3856594b006dd4c0927b23ec1f39
   subdir: cabal-install
   
+source-repository-package
+  type: git
+  location: https://github.com/haskell/cabal
+  tag: a94904c72f7e3856594b006dd4c0927b23ec1f39
+  subdir: cabal-install-solver
+
+source-repository-package
+  type: git
+  location: https://github.com/haskell/cabal
+  tag: a94904c72f7e3856594b006dd4c0927b23ec1f39
+  subdir: Cabal
+
+source-repository-package
+  type: git
+  location: https://github.com/haskell/cabal
+  tag: a94904c72f7e3856594b006dd4c0927b23ec1f39
+  subdir: Cabal-syntax
