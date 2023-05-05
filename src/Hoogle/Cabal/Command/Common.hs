@@ -61,7 +61,7 @@ readContext ::
   [String] ->
   IO Context
 readContext GlobalOptions {..} targetStrings =
-  withContextAndSelectors RejectNoTargets Nothing flags targetStrings' globalFlags $ \targetCtx ctx targetSelectors -> do
+  withContextAndSelectors RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
     let targetAction = TargetActionBuild
 
     baseCtx <- case targetCtx of
