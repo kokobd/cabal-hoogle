@@ -1,56 +1,46 @@
 {
-  # This is a template created by `hix init`
-  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
-  inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  outputs = { self, nixpkgs, flake-utils, haskellNix }:
-    let
-      supportedSystems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
-        "aarch64-darwin"
-      ];
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    in
-    flake-utils.lib.eachSystem supportedSystems (system:
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+  outputs = inputs@{ nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [
-          haskellNix.overlay
-          (final: prev: {
-            cabalHoogle = final.haskell-nix.project' {
-              src = ./.;
-              name = "cabal-hoogle";
-              compiler-nix-name = "ghc924"; # Version of GHC to use
+        pkgs = import nixpkgs { inherit system; };
+        compilers = [ "ghc8107" "ghc926" "ghc944" ];
+        defaultCompiler = "ghc8107";
 
-              shell = {
-                tools = {
-                  cabal = "latest";
-                  haskell-language-server = "latest";
-                };
-              };
-            };
-          })
-        ];
-        pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
-        flake = pkgs.cabalHoogle.flake {
-          crossPlatforms = p: pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-            p.musl64
+        mkShell = compiler: pkgs.mkShell {
+          buildInputs = with pkgs; [
+            zlib.dev
           ];
+          packages = with pkgs; [
+            cabal-install
+            haskell.compiler.${compiler}
+            ormolu
+            miniserve
+          ] ++ (with haskell.packages.${compiler}; [
+            haskell-language-server
+            cabal-fmt
+          ]);
+          shellHook = ''
+            export CABAL_DIR=$(pwd)/.cabal
+            export CABAL_CONFIG=$(pwd)/.cabal/config
+          '';
         };
       in
-      flake // {
-        legacyPackages = pkgs;
-        packages.default = flake.packages."x86_64-unknown-linux-musl:cabal-hoogle:exe:cabal-hoogle";
-      });
-
-  # --- Flake Local Nix Configuration ----------------------------
-  nixConfig = {
-    # This sets the flake to use the IOG nix cache.
-    # Nix should ask for permission before using it,
-    # but remove it here if you do not want it to.
-    extra-substituters = [ "https://cache.iog.io" ];
-    extra-trusted-public-keys = [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
-    allow-import-from-derivation = "true";
-  };
+      {
+        devShells = {
+          default = mkShell defaultCompiler;
+        } // builtins.listToAttrs (
+          builtins.map
+            (compiler: {
+              name = compiler;
+              value = mkShell compiler;
+            })
+            compilers
+        );
+      }
+    );
 }
