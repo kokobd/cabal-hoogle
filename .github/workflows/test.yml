@@ -15,7 +15,6 @@ jobs:
           # Some GHCs from GHCup don't have pre-compiled hoogle for bundled libraries
           - os: macos-latest
             ghc: "9.2.8"
-          - ghc: "9.6.4"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
