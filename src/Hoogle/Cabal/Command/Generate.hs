@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
@@ -21,6 +22,7 @@ import qualified Data.List.NonEmpty.Extra as NonEmpty
 import qualified Data.Map.Strict as Map
 import Data.Maybe (catMaybes)
 import Data.String.Interpolate (i)
+import qualified Data.Text as T
 import Data.Traversable (forM)
 import Distribution.Client.CmdBuild
   ( buildAction,
@@ -33,7 +35,7 @@ import Distribution.Client.ProjectOrchestration
   )
 import Distribution.Client.ProjectPlanning (ElaboratedConfiguredPackage)
 import Distribution.Client.ProjectPlanning.Types (elabDistDirParams)
-import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs, installedUnitId))
+import Distribution.InstalledPackageInfo (InstalledPackageInfo (haddockHTMLs, installedUnitId, pkgRoot))
 import Distribution.Simple (UnitId)
 import Distribution.Simple.Configure (ConfigStateFileError, tryGetPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
@@ -150,7 +152,7 @@ symlinkDependencies logger localPackages hoogleDependenciesDir = do
     unless (null pkgs) $
       logWith logger Warning $
         LogPkgMoreThan1Version name (fmap installedUnitId allPkgs)
-    case haddockHTMLs pkg of
+    case haddockHTMLs' pkg of
       [htmlDir] -> pure $ Just (name, htmlDir)
       htmlDirs -> do
         logWith logger Warning $ LogPkgBadHaddockHtml name htmlDirs
@@ -159,8 +161,23 @@ symlinkDependencies logger localPackages hoogleDependenciesDir = do
     createDirectoryLink dir (hoogleDependenciesDir </> PackageName.unPackageName name)
     pure name
   where
+    collectDependenciesForPkg :: LocalBuildInfo -> [(PackageName, NonEmpty InstalledPackageInfo)]
     collectDependenciesForPkg pkg =
       let depsWithName = allPackagesByName (LocalBuildInfo.installedPkgs pkg)
        in fmap (second (NonEmpty.:| []))
             . concatMap (\(name, pkgs) -> fmap (name,) pkgs)
             $ depsWithName
+
+haddockHTMLs' :: InstalledPackageInfo -> [FilePath]
+#if MIN_VERSION_GLASGOW_HASKELL(9,4,0,0)
+haddockHTMLs' pkg =
+  fmap
+    ( case pkgRoot pkg of
+        Nothing -> id
+        Just pkgRoot' -> T.unpack . T.replace "${pkgroot}" (T.pack pkgRoot') . T.pack
+    )
+    . haddockHTMLs
+    $ pkg
+#else
+haddockHTMLs' = haddockHTMLs
+#endif
