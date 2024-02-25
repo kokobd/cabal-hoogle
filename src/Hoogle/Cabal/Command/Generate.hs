@@ -169,7 +169,6 @@ symlinkDependencies logger localPackages hoogleDependenciesDir = do
             $ depsWithName
 
 haddockHTMLs' :: InstalledPackageInfo -> [FilePath]
-#if MIN_VERSION_GLASGOW_HASKELL(9,4,0,0)
 haddockHTMLs' pkg =
   fmap
     ( case pkgRoot pkg of
@@ -178,6 +177,3 @@ haddockHTMLs' pkg =
     )
     . haddockHTMLs
     $ pkg
-#else
-haddockHTMLs' = haddockHTMLs
-#endif
