@@ -8,8 +8,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        compilers = [ "ghc8107" "ghc926" "ghc944" ];
-        defaultCompiler = "ghc8107";
+        compilers = [ "ghc92" "ghc94" "ghc96" ];
+        defaultCompiler = "ghc94";
 
         mkShell = compiler: pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -20,10 +20,10 @@
             haskell.compiler.${compiler}
             ormolu
             miniserve
-          ] ++ (with haskell.packages.${compiler}; [
-            haskell-language-server
-            cabal-fmt
-          ]);
+          ] ++ (with haskell.packages.${compiler};
+            (lib.lists.optional (compiler != "ghc96") haskell-language-server) ++
+              [ cabal-fmt ghcid ]
+          );
           shellHook = ''
             export CABAL_DIR=$(pwd)/.cabal
             export CABAL_CONFIG=$(pwd)/.cabal/config
