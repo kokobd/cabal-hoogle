@@ -24,26 +24,14 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v3
-      - name: Install GHCup on MacOS
-        if: matrix.os == 'macos-latest'
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 BOOTSTRAP_HASKELL_MINIMAL=1 sh
-          source ~/.ghcup/env
-      - name: Upgrade GHCup on Ubuntu  
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          ghcup upgrade
-      - name: Install Tools
-        env:
-          GHCUP_CURL_OPTS: "--suppress-connect-headers"
-        run: |
-          ghcup list
-          ghcup rm ghc ${{ matrix.ghc }} || true
-          ghcup install ghc ${{ matrix.ghc }} --set
-          ghcup install cabal 3.12.1.0 --set
-          cabal update
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: "3.12.1.0"
       - name: Build
         run: |
+          cabal update
           cabal build all --enable-tests
       - name: Run Tests
         run: cabal test --test-show-details=always all
