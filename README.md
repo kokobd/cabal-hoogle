@@ -48,3 +48,13 @@ cabal-hoogle run -- search catMaybes
 ### More Options
 
 Run `cabal-hoogle --help` to see more options.
+
+## Contributing
+
+The CI is managed by [`haskell-ci`](https://github.com/haskell-CI/haskell-ci).
+After adding support of any new GHC version, run the following command using the
+latest `haskell-ci` executable to regenerate a new GHA workflow file.
+
+```haskell
+haskell-ci regenerate --no-unconstrained --installed=-all
+```
