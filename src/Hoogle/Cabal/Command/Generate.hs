@@ -40,6 +40,9 @@ import Distribution.Simple (UnitId)
 import Distribution.Simple.Configure (ConfigStateFileError, tryGetPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
 import Distribution.Types.LocalBuildInfo (LocalBuildInfo)
+#if MIN_VERSION_Cabal(3,14,0)
+import Distribution.Utils.Path (makeSymbolicPath)
+#endif
 import qualified Distribution.Types.LocalBuildInfo as LocalBuildInfo
 import qualified Distribution.Types.PackageDescription as PackageDescription
 import qualified Distribution.Types.PackageId as PackageId
@@ -126,7 +129,11 @@ action logger globalOptions (Command targets) = do
 symlinkLocalPackages :: Logger Log -> [FilePath] -> FilePath -> IO [(String, LocalBuildInfo)]
 symlinkLocalPackages logger pkgsPath destDir = do
   fmap catMaybes . forM pkgsPath $ \pkgPath -> runMaybeT $ do
+#if MIN_VERSION_Cabal(3,14,0)
+    lbiEither <- liftIO $ tryGetPersistBuildConfig Nothing (makeSymbolicPath pkgPath)
+#else
     lbiEither <- liftIO $ tryGetPersistBuildConfig pkgPath
+#endif
     lbi <- MaybeT $ case lbiEither of
       Left configStateFileErr -> do
         logWith logger Error $ LogCanNotReadSetupConfig pkgPath configStateFileErr
