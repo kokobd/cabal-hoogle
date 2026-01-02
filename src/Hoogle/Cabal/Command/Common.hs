@@ -114,10 +114,10 @@ readContext GlobalOptions {..} targetStrings =
     defaultFlags = defaultNixStyleFlags defaultBuildFlags
     flags =
       defaultFlags
+#if MIN_VERSION_Cabal(3,14,0)
         { configFlags =
             (configFlags defaultFlags)
               { configOptimization = Flag NoOptimisation
-#if MIN_VERSION_Cabal(3,14,0)
               , configCommonFlags =
                 (configCommonFlags (configFlags defaultFlags))
                 { setupDistPref = Flag (makeSymbolicPath _globalOptions_builddir)
