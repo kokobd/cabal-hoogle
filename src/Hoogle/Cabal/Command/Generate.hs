@@ -17,18 +17,18 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Maybe
 import Data.Bifunctor (Bifunctor (second))
 import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NonEmpty
-import qualified Data.List.NonEmpty.Extra as NonEmpty
-import qualified Data.Map.Strict as Map
+import Data.List.NonEmpty qualified as NonEmpty
+import Data.List.NonEmpty.Extra qualified as NonEmpty
+import Data.Map.Strict qualified as Map
 import Data.Maybe (catMaybes)
 import Data.String.Interpolate (i)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Traversable (forM)
 import Distribution.Client.CmdBuild
   ( buildAction,
   )
 import Distribution.Client.DistDirLayout (DistDirLayout (distBuildDirectory))
-import qualified Distribution.Client.InstallPlan as InstallPlan
+import Distribution.Client.InstallPlan qualified as InstallPlan
 import Distribution.Client.ProjectOrchestration
   ( ProjectBaseContext (distDirLayout),
     ProjectBuildContext (elaboratedPlanToExecute, elaboratedShared, targetsMap),
@@ -40,18 +40,20 @@ import Distribution.Simple (UnitId)
 import Distribution.Simple.Configure (ConfigStateFileError, tryGetPersistBuildConfig)
 import Distribution.Simple.PackageIndex (allPackagesByName)
 import Distribution.Types.LocalBuildInfo (LocalBuildInfo)
-import qualified Distribution.Types.LocalBuildInfo as LocalBuildInfo
-import qualified Distribution.Types.PackageDescription as PackageDescription
-import qualified Distribution.Types.PackageId as PackageId
+import Distribution.Types.LocalBuildInfo qualified as LocalBuildInfo
+import Distribution.Types.PackageDescription qualified as PackageDescription
+import Distribution.Types.PackageId qualified as PackageId
 import Distribution.Types.PackageName (PackageName)
-import qualified Distribution.Types.PackageName as PackageName
-import qualified Hoogle
+import Distribution.Types.PackageName qualified as PackageName
+import Distribution.Utils.Path (makeSymbolicPath)
+import Hoogle qualified
 import Hoogle.Cabal.Command.Common (Context (..), GlobalOptions (..), hoogleDatabaseArg, readContext)
 import Hoogle.Cabal.Logger
-import qualified Options.Applicative as OptParse
+import Options.Applicative qualified as OptParse
 import System.Directory
   ( createDirectoryIfMissing,
     createDirectoryLink,
+    getCurrentDirectory,
     removeDirectoryLink,
     removeDirectoryRecursive,
     withCurrentDirectory,
@@ -125,8 +127,13 @@ action logger globalOptions (Command targets) = do
 
 symlinkLocalPackages :: Logger Log -> [FilePath] -> FilePath -> IO [(String, LocalBuildInfo)]
 symlinkLocalPackages logger pkgsPath destDir = do
+  cwd <- getCurrentDirectory
   fmap catMaybes . forM pkgsPath $ \pkgPath -> runMaybeT $ do
-    lbiEither <- liftIO $ tryGetPersistBuildConfig pkgPath
+    lbiEither <-
+      liftIO $
+        tryGetPersistBuildConfig
+          (Just $ makeSymbolicPath cwd)
+          (makeSymbolicPath pkgPath)
     lbi <- MaybeT $ case lbiEither of
       Left configStateFileErr -> do
         logWith logger Error $ LogCanNotReadSetupConfig pkgPath configStateFileErr

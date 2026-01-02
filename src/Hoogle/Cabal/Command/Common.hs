@@ -1,3 +1,6 @@
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Hoogle.Cabal.Command.Common
@@ -9,7 +12,7 @@ module Hoogle.Cabal.Command.Common
   )
 where
 
-import qualified Data.Map.Strict as Map
+import Data.Map.Strict qualified as Map
 import Distribution.Client.CmdBuild (BuildFlags, defaultBuildFlags, selectComponentTarget, selectPackageTargets)
 import Distribution.Client.CmdErrorMessages (renderCannotPruneDependencies, reportTargetProblems)
 import Distribution.Client.DistDirLayout (distDirectory)
@@ -18,9 +21,11 @@ import Distribution.Client.ProjectOrchestration
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
-import Distribution.Simple.Setup (ConfigFlags (..), Flag (..), HaddockFlags (..))
+import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), setupDistPref, toFlag)
 import Distribution.Simple.Utils (die')
-import qualified Distribution.Verbosity as Verbosity
+import Distribution.Utils.Path (makeSymbolicPath)
+import Distribution.Verbosity qualified as Verbosity
+import GHC.Generics (Generic)
 import Options.Applicative
 import System.FilePath ((</>))
 
@@ -28,20 +33,22 @@ data GlobalOptions = GlobalOptions
   { _globalOptions_builddir :: FilePath,
     _globalOptions_version :: Bool
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq, Generic)
 
 globalOptionsParser :: Parser GlobalOptions
-globalOptionsParser =
-  GlobalOptions
-    <$> strOption
+globalOptionsParser = do
+  _globalOptions_builddir <-
+    strOption
       ( long "builddir"
           <> value "dist-newstyle/hoogle"
-          <> help "Cabal project build dir"
+          <> help "Build dir for cabal-hoogle (default: dist-newstyle/hoogle)"
       )
-    <*> switch
+  _globalOptions_version <-
+    switch
       ( long "version"
           <> help "Print version"
       )
+  pure GlobalOptions {..}
 
 hoogleDatabaseArg :: String
 hoogleDatabaseArg = "--database=all.hoo"
@@ -54,13 +61,13 @@ data Context = Context
     _context_flags :: NixStyleFlags BuildFlags,
     _context_globalFlags :: GlobalFlags
   }
+  deriving stock (Generic)
 
--- | This is copied from the implementation of 'buildAction'
 readContext ::
   GlobalOptions ->
   [String] ->
   IO Context
-readContext GlobalOptions {..} targetStrings =
+readContext GlobalOptions {_globalOptions_builddir} targetStrings =
   withContextAndSelectors RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
     let targetAction = TargetActionBuild
 
@@ -71,8 +78,6 @@ readContext GlobalOptions {..} targetStrings =
 
     let verbosity = Verbosity.normal
     buildCtx <- runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
-      -- Interpret the targets on the command line as build targets
-      -- (as opposed to say repl or haddock targets).
       targets <-
         either (reportTargetProblems verbosity "build") return $
           resolveTargets
@@ -109,23 +114,31 @@ readContext GlobalOptions {..} targetStrings =
     defaultFlags = defaultNixStyleFlags defaultBuildFlags
     flags =
       defaultFlags
-        { configFlags =
-            (configFlags defaultFlags)
-              { configOptimization = Flag NoOptimisation,
-                configDistPref = Flag _globalOptions_builddir
-              },
+        { configFlags = setBuildDir _globalOptions_builddir . disableOptimization $ configFlags defaultFlags,
           haddockFlags =
             (haddockFlags defaultFlags)
-              { haddockHoogle = Flag True,
-                haddockHtml = Flag True,
-                haddockLinkedSource = Flag True,
-                haddockQuickJump = Flag True
+              { haddockHoogle = toFlag True,
+                haddockHtml = toFlag True,
+                haddockLinkedSource = toFlag True,
+                haddockQuickJump = toFlag True
               },
           installFlags =
             (installFlags defaultFlags)
-              { installDocumentation = Flag True
+              { installDocumentation = toFlag True
               }
         }
     targetStrings' :: [String]
     targetStrings' = if null targetStrings then ["all"] else targetStrings
     globalFlags = defaultGlobalFlags
+
+disableOptimization :: ConfigFlags -> ConfigFlags
+disableOptimization configFlags = configFlags {configOptimization = toFlag NoOptimisation}
+
+setBuildDir :: FilePath -> ConfigFlags -> ConfigFlags
+setBuildDir buildDir configFlags =
+  configFlags
+    { configCommonFlags =
+        (configCommonFlags configFlags)
+          { setupDistPref = toFlag (makeSymbolicPath buildDir)
+          }
+    }
