@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               cabal-hoogle
-version:            3.10.0.0
+version:            3.14.0.0
 synopsis:           generate hoogle database for cabal project and dependencies
 description:
   Please see the README on GitHub at <https://github.com/kokobd/cabal-hoogle>
@@ -23,24 +23,24 @@ source-repository head
 
 library
   build-depends:
-    , base                  >=4.14     && <5
-    , Cabal                 >=3.10     && <3.15
-    , cabal-install         >=3.10     && <3.15
-    , Cabal-syntax          >=3.10     && <3.15
-    , co-log-core           >=0.2      && <0.4
-    , containers            >=0.6      && <0.8
+    , base                  >=4.17    && <4.23
+    , Cabal                 >=3.10    && <3.15
+    , cabal-install         >=3.10    && <3.15
+    , Cabal-syntax          >=3.10    && <3.15
+    , co-log-core           >=0.2     && <0.4
+    , containers            >=0.6     && <0.8
     , directory             ^>=1.3
-    , extra                 >=1.7      && <1.9
-    , filepath              >=1.4.2    && <1.6
+    , extra                 >=1.7     && <1.9
+    , filepath              >=1.4.2   && <1.6
     , hoogle                ^>=5.0.18
-    , lens                  >=5        && <6
-    , optparse-applicative  >=0.16     && <1
+    , lens                  >=5       && <6
+    , optparse-applicative  >=0.16    && <1
     , regex-tdfa            ^>=1.3
     , string-interpolate    ^>=0.3
-    , text                  ^>=1.2.4   || >=2.0 && <2.2
-    , time                  >=1.10     && <2
-    , transformers          ^>=0.5.6   || ^>=0.6
-    , typed-process         >=0.2.10   && <0.2.13
+    , text                  ^>=1.2.4  || ^>=2.0  || ^>=2.1
+    , time                  >=1.10    && <2
+    , transformers          ^>=0.5.6  || ^>=0.6
+    , typed-process         >=0.2.10  && <0.2.13
 
   default-language:   Haskell2010
   ghc-options:        -Wall
@@ -78,7 +78,7 @@ test-suite tests
     , base
     , cabal-hoogle
     , silently      ^>=1.2.5
-    , tasty         >=1.4       && <1.6 
+    , tasty         >=1.4    && <1.6
     , tasty-hunit   ^>=0.10
 
   build-tool-depends: tasty-discover:tasty-discover

@@ -1,5 +1,10 @@
 # Revision history for cabal-hoogle
 
+## 3.14.0.0 -- 2026-01-02
+
+* Support Cabal 3.14
+* Drop GHC 9.2
+
 ## 3.10.0.0 -- 2024-02-25
 
 * Switch to Cabal 3.10
