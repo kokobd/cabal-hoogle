@@ -45,7 +45,9 @@ import Distribution.Types.PackageDescription qualified as PackageDescription
 import Distribution.Types.PackageId qualified as PackageId
 import Distribution.Types.PackageName (PackageName)
 import Distribution.Types.PackageName qualified as PackageName
+#if MIN_VERSION_Cabal(3,14,0)
 import Distribution.Utils.Path (makeSymbolicPath)
+#endif
 import Hoogle qualified
 import Hoogle.Cabal.Command.Common (Context (..), GlobalOptions (..), hoogleDatabaseArg, readContext)
 import Hoogle.Cabal.Logger
@@ -53,7 +55,9 @@ import Options.Applicative qualified as OptParse
 import System.Directory
   ( createDirectoryIfMissing,
     createDirectoryLink,
+#if MIN_VERSION_Cabal(3,14,0)
     getCurrentDirectory,
+#endif
     removeDirectoryLink,
     removeDirectoryRecursive,
     withCurrentDirectory,
@@ -127,13 +131,19 @@ action logger globalOptions (Command targets) = do
 
 symlinkLocalPackages :: Logger Log -> [FilePath] -> FilePath -> IO [(String, LocalBuildInfo)]
 symlinkLocalPackages logger pkgsPath destDir = do
+#if MIN_VERSION_Cabal(3,14,0)
   cwd <- getCurrentDirectory
+#endif
   fmap catMaybes . forM pkgsPath $ \pkgPath -> runMaybeT $ do
     lbiEither <-
       liftIO $
+#if MIN_VERSION_Cabal(3,14,0)
         tryGetPersistBuildConfig
           (Just $ makeSymbolicPath cwd)
           (makeSymbolicPath pkgPath)
+#else
+        tryGetPersistBuildConfig pkgPath
+#endif
     lbi <- MaybeT $ case lbiEither of
       Left configStateFileErr -> do
         logWith logger Error $ LogCanNotReadSetupConfig pkgPath configStateFileErr

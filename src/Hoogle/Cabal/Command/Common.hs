@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -21,9 +22,12 @@ import Distribution.Client.ProjectOrchestration
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
-import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), setupDistPref, toFlag)
-import Distribution.Simple.Utils (die')
+import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), toFlag)
+#if MIN_VERSION_Cabal(3,14,0)
+import Distribution.Simple.Setup (setupDistPref)
 import Distribution.Utils.Path (makeSymbolicPath)
+#endif
+import Distribution.Simple.Utils (die')
 import Distribution.Verbosity qualified as Verbosity
 import GHC.Generics (Generic)
 import Options.Applicative
@@ -135,6 +139,7 @@ disableOptimization :: ConfigFlags -> ConfigFlags
 disableOptimization configFlags = configFlags {configOptimization = toFlag NoOptimisation}
 
 setBuildDir :: FilePath -> ConfigFlags -> ConfigFlags
+#if MIN_VERSION_Cabal(3,14,0)
 setBuildDir buildDir configFlags =
   configFlags
     { configCommonFlags =
@@ -142,3 +147,9 @@ setBuildDir buildDir configFlags =
           { setupDistPref = toFlag (makeSymbolicPath buildDir)
           }
     }
+#else
+setBuildDir buildDir configFlags =
+  configFlags
+    { configDistPref = toFlag buildDir
+    }
+#endif
