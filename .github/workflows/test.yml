@@ -13,11 +13,14 @@ jobs:
           - ubuntu-latest
           - macos-latest
         ghc:
-          - "9.2.8"
           - "9.4.8"
-          - "9.6.6"
-          - "9.8.2"
-          - "9.10.1"
+          - "9.6.7"
+          - "9.8.4"
+          - "9.10.3"
+          - "9.12.2"
+        cabal:
+          - "3.12.1.0"
+          - "3.14.2.0"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -25,13 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Haskell
-        uses: haskell-actions/setup@v2
+        uses: haskell-actions/setup@v2.9.0
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: "3.12.1.0"
+          cabal-version: ${{ matrix.cabal }}
       - name: Build
         run: |
           cabal update
+          cabal configure --constraint 'Cabal == ${{ matrix.cabal }}'
           cabal build all --enable-tests
       - name: Run Tests
         run: cabal test --test-show-details=always all
@@ -45,3 +49,4 @@ jobs:
         run: exit 1
       - if: contains(needs.*.result, 'cancelled') && needs.pre_job.outputs.should_skip != 'true'
         run: exit 1
+

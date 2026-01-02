@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE CPP #-}
 
 module Hoogle.Cabal.Command.Common
   ( GlobalOptions (..),
@@ -23,6 +24,10 @@ import Distribution.Simple.Utils (die')
 import qualified Distribution.Verbosity as Verbosity
 import Options.Applicative
 import System.FilePath ((</>))
+# if MIN_VERSION_Cabal(3,14,0)
+import Distribution.Simple.Setup (CommonSetupFlags (..))
+import Distribution.Utils.Path (makeSymbolicPath)
+#endif
 
 data GlobalOptions = GlobalOptions
   { _globalOptions_builddir :: FilePath,
@@ -109,11 +114,22 @@ readContext GlobalOptions {..} targetStrings =
     defaultFlags = defaultNixStyleFlags defaultBuildFlags
     flags =
       defaultFlags
+#if MIN_VERSION_Cabal(3,14,0)
+        { configFlags =
+            (configFlags defaultFlags)
+              { configOptimization = Flag NoOptimisation
+              , configCommonFlags =
+                (configCommonFlags (configFlags defaultFlags))
+                { setupDistPref = Flag (makeSymbolicPath _globalOptions_builddir)
+                }
+              },
+#else
         { configFlags =
             (configFlags defaultFlags)
               { configOptimization = Flag NoOptimisation,
                 configDistPref = Flag _globalOptions_builddir
               },
+#endif
           haddockFlags =
             (haddockFlags defaultFlags)
               { haddockHoogle = Flag True,
