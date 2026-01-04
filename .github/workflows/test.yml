@@ -21,6 +21,7 @@ jobs:
         cabal:
           - "3.12.1.0"
           - "3.14.2.0"
+          - "3.16.1.0"
     runs-on: ${{ matrix.os }}
     defaults:
       run:

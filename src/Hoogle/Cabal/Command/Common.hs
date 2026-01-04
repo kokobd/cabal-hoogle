@@ -1,5 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Hoogle.Cabal.Command.Common
   ( GlobalOptions (..),
@@ -19,7 +21,8 @@ import Distribution.Client.ProjectOrchestration
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
-import Distribution.Simple.Setup (ConfigFlags (..), Flag (..), HaddockFlags (..))
+import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..))
+import Distribution.Simple.Flag (pattern Flag)
 import Distribution.Simple.Utils (die')
 import qualified Distribution.Verbosity as Verbosity
 import Options.Applicative
@@ -27,6 +30,11 @@ import System.FilePath ((</>))
 # if MIN_VERSION_Cabal(3,14,0)
 import Distribution.Simple.Setup (CommonSetupFlags (..))
 import Distribution.Utils.Path (makeSymbolicPath)
+#endif
+
+# if MIN_VERSION_Cabal(3,16,0)
+-- See: https://github.com/haskell/cabal/commit/0f1f67cb97dca952123f262e7670a200a783acf4
+resolveTargets = resolveTargetsFromSolver
 #endif
 
 data GlobalOptions = GlobalOptions
@@ -66,7 +74,11 @@ readContext ::
   [String] ->
   IO Context
 readContext GlobalOptions {..} targetStrings =
-  withContextAndSelectors RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
+  withContextAndSelectors
+# if MIN_VERSION_Cabal(3,16,0)
+    Verbosity.normal
+#endif
+    RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
     let targetAction = TargetActionBuild
 
     baseCtx <- case targetCtx of
