@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Hoogle.Cabal.Command.Common
@@ -16,8 +17,11 @@ import Distribution.Client.CmdErrorMessages (renderCannotPruneDependencies, repo
 import Distribution.Client.DistDirLayout (distDirectory)
 import Distribution.Client.NixStyleOptions
 import Distribution.Client.ProjectOrchestration
+import Distribution.Client.ProjectPlanning.Types (ElaboratedInstallPlan)
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
+import Distribution.Client.TargetProblem (TargetProblem)
+import Distribution.Client.Types.SourcePackageDb (SourcePackageDb)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
 import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), toFlag)
 import Distribution.Simple.Utils (die')
@@ -79,7 +83,7 @@ readContext GlobalOptions {..} targetStrings =
       -- (as opposed to say repl or haddock targets).
       targets <-
         either (reportTargetProblems defaultVerbosity "build") return $
-          resolveTargetsFromSolver
+          resolveTargets'
             selectPackageTargets
             selectComponentTarget
             elaboratedPlan
@@ -164,6 +168,31 @@ withContextAndSelectors' ::
 withContextAndSelectors' = withContextAndSelectors defaultVerbosity
 #else
 withContextAndSelectors' = withContextAndSelectors
+#endif
+
+resolveTargets' ::
+  ( forall k.
+    TargetSelector ->
+    [AvailableTarget k] ->
+    Either
+      (TargetProblem err)
+      [k]
+  ) ->
+  ( forall k.
+    SubComponentTarget ->
+    AvailableTarget k ->
+    Either (TargetProblem err) k
+  ) ->
+  ElaboratedInstallPlan ->
+  Maybe SourcePackageDb ->
+  [TargetSelector] ->
+  Either
+    [TargetProblem err]
+    TargetsMap
+#if MIN_VERSION_Cabal(3,16,0)
+resolveTargets' = resolveTargetsFromSolver
+#else
+resolveTargets' = resolveTargets
 #endif
 
 defaultVerbosity :: Verbosity.Verbosity
