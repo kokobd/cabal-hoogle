@@ -1,7 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Hoogle.Cabal.Command.Common
   ( GlobalOptions (..),
@@ -18,11 +17,13 @@ import Distribution.Client.CmdErrorMessages (renderCannotPruneDependencies, repo
 import Distribution.Client.DistDirLayout (distDirectory)
 import Distribution.Client.NixStyleOptions
 import Distribution.Client.ProjectOrchestration
+import Distribution.Client.ProjectPlanning.Types (ElaboratedInstallPlan)
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
+import Distribution.Client.TargetProblem (TargetProblem)
+import Distribution.Client.Types.SourcePackageDb (SourcePackageDb)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
-import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..))
-import Distribution.Simple.Flag (pattern Flag)
+import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), toFlag)
 import Distribution.Simple.Utils (die')
 import qualified Distribution.Verbosity as Verbosity
 import Options.Applicative
@@ -30,11 +31,6 @@ import System.FilePath ((</>))
 # if MIN_VERSION_Cabal(3,14,0)
 import Distribution.Simple.Setup (CommonSetupFlags (..))
 import Distribution.Utils.Path (makeSymbolicPath)
-#endif
-
-# if MIN_VERSION_Cabal(3,16,0)
--- See: https://github.com/haskell/cabal/commit/0f1f67cb97dca952123f262e7670a200a783acf4
-resolveTargets = resolveTargetsFromSolver
 #endif
 
 data GlobalOptions = GlobalOptions
@@ -74,11 +70,7 @@ readContext ::
   [String] ->
   IO Context
 readContext GlobalOptions {..} targetStrings =
-  withContextAndSelectors
-# if MIN_VERSION_Cabal(3,16,0)
-    Verbosity.normal
-#endif
-    RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
+  withContextAndSelectors' RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
     let targetAction = TargetActionBuild
 
     baseCtx <- case targetCtx of
@@ -86,13 +78,12 @@ readContext GlobalOptions {..} targetStrings =
       GlobalContext -> return ctx
       ScriptContext path exemeta -> updateContextAndWriteProjectFile ctx path exemeta
 
-    let verbosity = Verbosity.normal
-    buildCtx <- runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+    buildCtx <- runProjectPreBuildPhase defaultVerbosity baseCtx $ \elaboratedPlan -> do
       -- Interpret the targets on the command line as build targets
       -- (as opposed to say repl or haddock targets).
       targets <-
-        either (reportTargetProblems verbosity "build") return $
-          resolveTargets
+        either (reportTargetProblems defaultVerbosity "build") return $
+          resolveTargets'
             selectPackageTargets
             selectComponentTarget
             elaboratedPlan
@@ -107,7 +98,7 @@ readContext GlobalOptions {..} targetStrings =
       elaboratedPlan'' <-
         if buildSettingOnlyDeps (buildSettings baseCtx)
           then
-            either (die' verbosity . renderCannotPruneDependencies) return $
+            either (die' defaultVerbosity . renderCannotPruneDependencies) return $
               pruneInstallPlanToDependencies
                 (Map.keysSet targets)
                 elaboratedPlan'
@@ -126,34 +117,84 @@ readContext GlobalOptions {..} targetStrings =
     defaultFlags = defaultNixStyleFlags defaultBuildFlags
     flags =
       defaultFlags
-#if MIN_VERSION_Cabal(3,14,0)
-        { configFlags =
-            (configFlags defaultFlags)
-              { configOptimization = Flag NoOptimisation
-              , configCommonFlags =
-                (configCommonFlags (configFlags defaultFlags))
-                { setupDistPref = Flag (makeSymbolicPath _globalOptions_builddir)
-                }
-              },
-#else
-        { configFlags =
-            (configFlags defaultFlags)
-              { configOptimization = Flag NoOptimisation,
-                configDistPref = Flag _globalOptions_builddir
-              },
-#endif
+        { configFlags = setBuildDir _globalOptions_builddir . disableOptimization $ configFlags defaultFlags,
           haddockFlags =
             (haddockFlags defaultFlags)
-              { haddockHoogle = Flag True,
-                haddockHtml = Flag True,
-                haddockLinkedSource = Flag True,
-                haddockQuickJump = Flag True
+              { haddockHoogle = toFlag True,
+                haddockHtml = toFlag True,
+                haddockLinkedSource = toFlag True,
+                haddockQuickJump = toFlag True
               },
           installFlags =
             (installFlags defaultFlags)
-              { installDocumentation = Flag True
+              { installDocumentation = toFlag True
               }
         }
     targetStrings' :: [String]
     targetStrings' = if null targetStrings then ["all"] else targetStrings
     globalFlags = defaultGlobalFlags
+
+disableOptimization :: ConfigFlags -> ConfigFlags
+disableOptimization flags = flags {configOptimization = toFlag NoOptimisation}
+
+setBuildDir :: FilePath -> ConfigFlags -> ConfigFlags
+#if MIN_VERSION_Cabal(3,14,0)
+setBuildDir buildDir flags =
+  flags
+    { configCommonFlags =
+        (configCommonFlags flags)
+          { setupDistPref = toFlag $ makeSymbolicPath buildDir
+          }
+    }
+#else
+setBuildDir buildDir flags =
+  flags { configDistPref = toFlag buildDir }
+#endif
+
+withContextAndSelectors' ::
+  AcceptNoTargets ->
+  Maybe ComponentKind ->
+  NixStyleFlags a ->
+  [String] ->
+  GlobalFlags ->
+  CurrentCommand ->
+  ( TargetContext ->
+    ProjectBaseContext ->
+    [TargetSelector] ->
+    IO b
+  ) ->
+  IO b
+#if MIN_VERSION_Cabal(3,16,0)
+withContextAndSelectors' = withContextAndSelectors defaultVerbosity
+#else
+withContextAndSelectors' = withContextAndSelectors
+#endif
+
+resolveTargets' ::
+  ( forall k.
+    TargetSelector ->
+    [AvailableTarget k] ->
+    Either
+      (TargetProblem err)
+      [k]
+  ) ->
+  ( forall k.
+    SubComponentTarget ->
+    AvailableTarget k ->
+    Either (TargetProblem err) k
+  ) ->
+  ElaboratedInstallPlan ->
+  Maybe SourcePackageDb ->
+  [TargetSelector] ->
+  Either
+    [TargetProblem err]
+    TargetsMap
+#if MIN_VERSION_Cabal(3,16,0)
+-- resolveTargetsFromSolver is a drop-in replacement of resolveTargets. See https://github.com/haskell/cabal/commit/0f1f67cb97dca952123f262e7670a200a783acf4
+resolveTargets' = resolveTargetsFromSolver
+#else
+resolveTargets' = resolveTargets
+#endif
+
+defaultVerbosity :: Verbosity.Verbosity
+defaultVerbosity = Verbosity.normal
