@@ -66,7 +66,7 @@ readContext ::
   [String] ->
   IO Context
 readContext GlobalOptions {..} targetStrings =
-  withContextAndSelectors RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
+  withContextAndSelectors' RejectNoTargets Nothing flags targetStrings' globalFlags HaddockCommand $ \targetCtx ctx targetSelectors -> do
     let targetAction = TargetActionBuild
 
     baseCtx <- case targetCtx of
@@ -74,13 +74,12 @@ readContext GlobalOptions {..} targetStrings =
       GlobalContext -> return ctx
       ScriptContext path exemeta -> updateContextAndWriteProjectFile ctx path exemeta
 
-    let verbosity = Verbosity.normal
-    buildCtx <- runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+    buildCtx <- runProjectPreBuildPhase defaultVerbosity baseCtx $ \elaboratedPlan -> do
       -- Interpret the targets on the command line as build targets
       -- (as opposed to say repl or haddock targets).
       targets <-
-        either (reportTargetProblems verbosity "build") return $
-          resolveTargets
+        either (reportTargetProblems defaultVerbosity "build") return $
+          resolveTargetsFromSolver
             selectPackageTargets
             selectComponentTarget
             elaboratedPlan
@@ -95,7 +94,7 @@ readContext GlobalOptions {..} targetStrings =
       elaboratedPlan'' <-
         if buildSettingOnlyDeps (buildSettings baseCtx)
           then
-            either (die' verbosity . renderCannotPruneDependencies) return $
+            either (die' defaultVerbosity . renderCannotPruneDependencies) return $
               pruneInstallPlanToDependencies
                 (Map.keysSet targets)
                 elaboratedPlan'
@@ -147,3 +146,25 @@ setBuildDir buildDir flags =
 setBuildDir buildDir flags =
   flags { configDistPref = toFlag buildDir }
 #endif
+
+withContextAndSelectors' ::
+  AcceptNoTargets ->
+  Maybe ComponentKind ->
+  NixStyleFlags a ->
+  [String] ->
+  GlobalFlags ->
+  CurrentCommand ->
+  ( TargetContext ->
+    ProjectBaseContext ->
+    [TargetSelector] ->
+    IO b
+  ) ->
+  IO b
+#if MIN_VERSION_Cabal(3,16,0)
+withContextAndSelectors' = withContextAndSelectors defaultVerbosity
+#else
+withContextAndSelectors' = withContextAndSelectors
+#endif
+
+defaultVerbosity :: Verbosity.Verbosity
+defaultVerbosity = Verbosity.normal

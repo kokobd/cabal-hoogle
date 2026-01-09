@@ -24,9 +24,9 @@ source-repository head
 library
   build-depends:
     , base                  >=4.17    && <4.23
-    , Cabal                 >=3.10    && <3.15
-    , cabal-install         >=3.10    && <3.15
-    , Cabal-syntax          >=3.10    && <3.15
+    , Cabal                 >=3.10    && <3.17
+    , cabal-install         >=3.10    && <3.17
+    , Cabal-syntax          >=3.10    && <3.17
     , co-log-core           >=0.2     && <0.4
     , containers            >=0.6     && <0.8
     , directory             ^>=1.3
