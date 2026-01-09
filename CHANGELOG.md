@@ -1,5 +1,9 @@
 # Revision history for cabal-hoogle
 
+## 3.16 -- 2026-01-09
+
+* Support Cabal 3.16
+
 ## 3.14.0.0 -- 2026-01-02
 
 * Support Cabal 3.14
