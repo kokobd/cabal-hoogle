@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Hoogle.Cabal.Command.Common
   ( GlobalOptions (..),
@@ -19,7 +19,7 @@ import Distribution.Client.ProjectOrchestration
 import Distribution.Client.ScriptUtils
 import Distribution.Client.Setup (GlobalFlags, InstallFlags (..), defaultGlobalFlags)
 import Distribution.Simple (OptimisationLevel (NoOptimisation))
-import Distribution.Simple.Setup (ConfigFlags (..), Flag (..), HaddockFlags (..))
+import Distribution.Simple.Setup (ConfigFlags (..), HaddockFlags (..), toFlag)
 import Distribution.Simple.Utils (die')
 import qualified Distribution.Verbosity as Verbosity
 import Options.Applicative
@@ -114,34 +114,36 @@ readContext GlobalOptions {..} targetStrings =
     defaultFlags = defaultNixStyleFlags defaultBuildFlags
     flags =
       defaultFlags
-#if MIN_VERSION_Cabal(3,14,0)
-        { configFlags =
-            (configFlags defaultFlags)
-              { configOptimization = Flag NoOptimisation
-              , configCommonFlags =
-                (configCommonFlags (configFlags defaultFlags))
-                { setupDistPref = Flag (makeSymbolicPath _globalOptions_builddir)
-                }
-              },
-#else
-        { configFlags =
-            (configFlags defaultFlags)
-              { configOptimization = Flag NoOptimisation,
-                configDistPref = Flag _globalOptions_builddir
-              },
-#endif
+        { configFlags = setBuildDir _globalOptions_builddir . disableOptimization $ configFlags defaultFlags,
           haddockFlags =
             (haddockFlags defaultFlags)
-              { haddockHoogle = Flag True,
-                haddockHtml = Flag True,
-                haddockLinkedSource = Flag True,
-                haddockQuickJump = Flag True
+              { haddockHoogle = toFlag True,
+                haddockHtml = toFlag True,
+                haddockLinkedSource = toFlag True,
+                haddockQuickJump = toFlag True
               },
           installFlags =
             (installFlags defaultFlags)
-              { installDocumentation = Flag True
+              { installDocumentation = toFlag True
               }
         }
     targetStrings' :: [String]
     targetStrings' = if null targetStrings then ["all"] else targetStrings
     globalFlags = defaultGlobalFlags
+
+disableOptimization :: ConfigFlags -> ConfigFlags
+disableOptimization flags = flags {configOptimization = toFlag NoOptimisation}
+
+setBuildDir :: FilePath -> ConfigFlags -> ConfigFlags
+#if MIN_VERSION_Cabal(3,14,0)
+setBuildDir buildDir flags =
+  flags
+    { configCommonFlags =
+        (configCommonFlags flags)
+          { setupDistPref = toFlag $ makeSymbolicPath buildDir
+          }
+    }
+#else
+setBuildDir buildDir flags =
+  flags { configDistPref = toFlag buildDir }
+#endif
