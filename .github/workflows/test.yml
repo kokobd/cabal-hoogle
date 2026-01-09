@@ -3,7 +3,7 @@ on:
     branches:
       - main
   pull_request: {}
-  workflow_dispatch : {}
+  workflow_dispatch: {}
 jobs:
   test:
     strategy:
@@ -21,6 +21,7 @@ jobs:
         cabal:
           - "3.12.1.0"
           - "3.14.2.0"
+          - "3.16.1.0"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -49,4 +50,3 @@ jobs:
         run: exit 1
       - if: contains(needs.*.result, 'cancelled') && needs.pre_job.outputs.should_skip != 'true'
         run: exit 1
-
