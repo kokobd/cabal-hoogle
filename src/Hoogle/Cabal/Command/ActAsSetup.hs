@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Hoogle.Cabal.Command.ActAsSetup
   ( command,
     Command,
@@ -47,5 +49,6 @@ action (Command buildTypeStr args) = do
           args
     Make -> liftIO $ Make.defaultMainArgs args
     Custom -> throwError "Build type 'Custom' not supported"
+#if MIN_VERSION_Cabal(3,14,0)
     Hooks -> throwError "Build type 'Hooks' not supported"
-
+#endif
