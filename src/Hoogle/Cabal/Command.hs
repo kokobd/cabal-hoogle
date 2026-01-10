@@ -2,6 +2,9 @@
 
 module Hoogle.Cabal.Command where
 
+import Control.Monad.Except (ExceptT, runExceptT)
+import Data.Text (Text)
+import qualified Data.Text.IO as TIO
 import qualified Hoogle.Cabal.Command.ActAsSetup as ActAsSetup
 import Hoogle.Cabal.Command.Common
 import qualified Hoogle.Cabal.Command.Generate as Generate
@@ -9,6 +12,8 @@ import qualified Hoogle.Cabal.Command.Run as Run
 import qualified Hoogle.Cabal.Command.Version as Version
 import Hoogle.Cabal.Logger
 import Options.Applicative
+import System.Exit (exitFailure)
+import System.IO (stderr)
 
 data CmdOptions = CmdOptions
   { _cmdOptions_global :: GlobalOptions,
@@ -40,7 +45,7 @@ executeCommand logger = do
       Nothing -> pure ()
       Just cmd' -> case cmd' of
         CommandGenerate cmd -> Generate.action (cmapLogger LogGenerate logger) _cmdOptions_global cmd
-        CommandActAsSetup cmd -> ActAsSetup.action cmd
+        CommandActAsSetup cmd -> handleError $ ActAsSetup.action cmd
         CommandRun cmd -> Run.action (cmapLogger LogRun logger) _cmdOptions_global cmd
         CommandVersion cmd -> Version.action cmd
 
@@ -69,3 +74,13 @@ readCmdOptions = execParser parserInfo
                   <> "See https://github.com/kokobd/cabal-hoogle for more information"
               )
         )
+
+handleError :: ExceptT Text IO a -> IO a
+handleError m = do
+  resultEither <- runExceptT m
+  case resultEither of
+    Left errMsg -> do
+      TIO.hPutStrLn stderr errMsg
+      exitFailure
+    Right result -> pure result
+
