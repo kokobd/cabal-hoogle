@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Hoogle.Cabal.Command.ActAsSetup
   ( command,
     Command,
@@ -5,9 +7,14 @@ module Hoogle.Cabal.Command.ActAsSetup
   )
 where
 
-import Data.Maybe (fromJust)
+import Control.Monad.Error.Class (liftEither, throwError)
+import Control.Monad.Except (ExceptT)
+import Control.Monad.IO.Class (liftIO)
+import Data.Bifunctor (first)
+import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Distribution.Make as Make
-import Distribution.Parsec (simpleParsec)
+import Distribution.Parsec (eitherParsec)
 import qualified Distribution.Simple as Simple
 import Distribution.Types.BuildType
 import qualified Options.Applicative as OptParse
@@ -30,14 +37,18 @@ commandParser =
     <$> OptParse.strOption (OptParse.long "build-type")
     <*> (OptParse.many . OptParse.strArgument) (OptParse.metavar "ARGS")
 
-action :: Command -> IO ()
-action (Command buildTypeStr args) =
-  let bt = fromJust $ simpleParsec buildTypeStr -- TODO: report error properly
-   in case bt of
-        Simple -> Simple.defaultMainArgs args
-        Configure ->
-          Simple.defaultMainWithHooksArgs
-            Simple.autoconfUserHooks
-            args
-        Make -> Make.defaultMainArgs args
-        Custom -> error "actAsSetupAction Custom"
+action :: Command -> ExceptT Text IO ()
+action (Command buildTypeStr args) = do
+  buildType <- liftEither . first T.pack $ eitherParsec buildTypeStr
+  case buildType of
+    Simple -> liftIO $ Simple.defaultMainArgs args
+    Configure ->
+      liftIO $
+        Simple.defaultMainWithHooksArgs
+          Simple.autoconfUserHooks
+          args
+    Make -> liftIO $ Make.defaultMainArgs args
+    Custom -> throwError "Build type 'Custom' not supported"
+#if MIN_VERSION_Cabal(3,14,0)
+    Hooks -> throwError "Build type 'Hooks' not supported"
+#endif
